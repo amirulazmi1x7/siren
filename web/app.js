@@ -75,26 +75,49 @@ function clockLabel(t) {
 
 // ---------- map ----------
 
-const map = { svg: null, proj: null, w: 600, h: 600, dots: null, hosp: null };
+const map = { svg: null, proj: null, w: 600, h: 600, dots: null, hosp: null, geo: null };
+const PAD = 16;
 
-function setupMap() {
+// Zip code shapes are optional: if the file is missing the map still works on a blank background.
+async function loadAreaShapes() {
+  try {
+    const res = await fetch("data/brooklyn_zcta.geojson");
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+function setupMap(geo) {
   const svg = d3.select("#map").attr("viewBox", `0 0 ${map.w} ${map.h}`);
   map.svg = svg;
-  svg.append("g").attr("class", "land");
+  map.geo = geo;
+  const land = svg.append("g").attr("class", "land");
   svg.append("g").attr("class", "calls");
   svg.append("g").attr("class", "hospitals");
+  if (!geo) return;
+  map.proj = d3.geoMercator().fitExtent([[PAD, PAD], [map.w - PAD, map.h - PAD]], geo);
+  const path = d3.geoPath(map.proj);
+  land.selectAll("path")
+    .data(geo.features)
+    .join("path")
+    .attr("d", path)
+    .append("title")
+    .text((f) => `ZIP ${f.properties.zip}`);
 }
 
 function drawNightOnMap() {
   const n = night();
-  const pts = [
-    ...n.calls.map((c) => [c.lon, c.lat]),
-    ...state.data.hospitals.map((h) => [h.lon, h.lat]),
-  ];
-  map.proj = d3.geoMercator().fitExtent(
-    [[30, 30], [map.w - 30, map.h - 30]],
-    { type: "MultiPoint", coordinates: pts },
-  );
+  if (!map.geo) {
+    const pts = [
+      ...n.calls.map((c) => [c.lon, c.lat]),
+      ...state.data.hospitals.map((h) => [h.lon, h.lat]),
+    ];
+    map.proj = d3.geoMercator().fitExtent(
+      [[30, 30], [map.w - 30, map.h - 30]],
+      { type: "MultiPoint", coordinates: pts },
+    );
+  }
 
   map.dots = map.svg.select("g.calls")
     .selectAll("circle")
@@ -394,15 +417,16 @@ function wire() {
 }
 
 (async function main() {
+  let geo = null;
   try {
-    state.data = await loadScenarios();
+    [state.data, geo] = await Promise.all([loadScenarios(), loadAreaShapes()]);
   } catch (err) {
     document.getElementById("city").textContent = "Could not load data/scenarios.json. Serve the web/ folder (see README).";
     console.error(err);
     return;
   }
   if (!state.data.nights[state.nightName]) state.nightName = Object.keys(state.data.nights)[0];
-  setupMap();
+  setupMap(geo);
   wire();
   setNight(state.nightName);
 })();
