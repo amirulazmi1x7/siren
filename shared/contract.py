@@ -1,109 +1,195 @@
-"""The data contract between Person A (pipeline) and Person B (web page).
+"""The data contract for web/data/scenarios.json (see PLAN.md).
 
-`web/data/scenarios.json` must pass `validate_scenarios` before anyone ships it.
+validate_scenarios(d) returns a list of human-readable errors; [] means valid.
+plan_key(slots) builds the lookup key; web/app.js planKey() must match it.
 """
+from __future__ import annotations
+
+import re
 from typing import Iterable
 
-NIGHTS = ("typical", "holiday", "heat")
-HOSPITAL_IDS = ("A", "B", "C")
+HOSPITAL_IDS = ["A", "B", "C"]
 N_BLOCKS = 6
+NIGHT_T_MAX = 720  # minutes from 6 PM to 6 AM
+REQUIRED_NIGHTS = ["typical", "holiday", "heat"]
+OPTIONAL_NIGHTS = ["forecast"]
+MAX_LOOKUP_SHIFTS = 4
+AI_BUDGETS = [str(k) for k in range(1, 7)]
+SLOT_RE = re.compile(r"^[ABC]-[0-5]$")
 
 
 def plan_key(slots: Iterable[str]) -> str:
-    """Canonical key for a set of slots like "A-3": sorted, comma-joined. Empty plan -> ""."""
-    return ",".join(sorted(slots))
+    """Slot keys sorted ascending and joined with ','. Empty plan -> ''."""
+    return ",".join(sorted(set(slots)))
 
 
-def _check_grid(name: str, grid, errors: list[str]) -> None:
-    if (not isinstance(grid, list) or len(grid) != len(HOSPITAL_IDS)
-            or any(not isinstance(r, list) or len(r) != N_BLOCKS for r in grid)):
-        errors.append(f"{name}: must be a 3x6 grid")
+def _is_num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def _check_grid(grid, where: str, errors: list[str]) -> None:
+    if (
+        not isinstance(grid, list)
+        or len(grid) != len(HOSPITAL_IDS)
+        or any(not isinstance(r, list) or len(r) != N_BLOCKS for r in grid)
+    ):
+        errors.append(f"{where}: must be a 3x6 list of numbers")
         return
-    if any(not isinstance(v, (int, float)) or v < 0 for r in grid for v in r):
-        errors.append(f"{name}: values must be numbers >= 0")
+    for row in grid:
+        for v in row:
+            if not _is_num(v) or v < 0:
+                errors.append(f"{where}: values must be numbers >= 0")
+                return
 
 
-def _check_result(name: str, res, call_ids: set, errors: list[str]) -> None:
+def _check_result(res, where: str, call_ids: set, errors: list[str]) -> None:
     if not isinstance(res, dict):
-        errors.append(f"{name}: must be an object")
+        errors.append(f"{where}: must be an object")
         return
-    for key in ("late_ids", "stuck", "door_wait_min"):
-        if key not in res:
-            errors.append(f"{name}: missing {key}")
-    if "late_ids" in res:
-        bad = [i for i in res["late_ids"] if i not in call_ids]
-        if bad:
-            errors.append(f"{name}: late_ids not in calls: {bad[:5]}")
-    for key in ("stuck", "door_wait_min"):
-        if key in res:
-            _check_grid(f"{name}.{key}", res[key], errors)
+    for field in ("late_ids", "stuck", "door_wait_min"):
+        if field not in res:
+            errors.append(f"{where}: missing '{field}'")
+    late = res.get("late_ids")
+    if late is not None:
+        if not isinstance(late, list):
+            errors.append(f"{where}.late_ids: must be a list")
+        else:
+            unknown = [i for i in late if i not in call_ids]
+            if unknown:
+                errors.append(f"{where}.late_ids: ids not in calls, e.g. {unknown[:3]}")
+    if "stuck" in res:
+        _check_grid(res["stuck"], f"{where}.stuck", errors)
+    if "door_wait_min" in res:
+        _check_grid(res["door_wait_min"], f"{where}.door_wait_min", errors)
+
+
+def _check_slots(slots, where: str, errors: list[str]) -> bool:
+    if not isinstance(slots, list) or any(not isinstance(s, str) or not SLOT_RE.match(s) for s in slots):
+        errors.append(f"{where}: slots must look like 'A-3'")
+        return False
+    if len(set(slots)) != len(slots):
+        errors.append(f"{where}: duplicate slots")
+        return False
+    return True
 
 
 def _check_night(name: str, night, errors: list[str]) -> None:
-    p = f"nights.{name}"
+    w = f"nights.{name}"
     if not isinstance(night, dict):
-        errors.append(f"{p}: must be an object")
+        errors.append(f"{w}: must be an object")
         return
-    for key in ("label", "calls", "real", "baseline", "ambulances_plus2", "ai_plans", "lookup"):
-        if key not in night:
-            errors.append(f"{p}: missing {key}")
-    calls = night.get("calls", [])
-    call_ids = set()
-    for c in calls:
-        missing = [k for k in ("id", "t", "lat", "lon", "hosp", "severity") if k not in c]
-        if missing:
-            errors.append(f"{p}.calls: call missing {missing}")
-            break
-        if not 0 <= c["t"] <= 720:
-            errors.append(f"{p}.calls: t out of range for call {c['id']}")
-            break
-        if c["hosp"] not in HOSPITAL_IDS:
-            errors.append(f"{p}.calls: unknown hospital {c['hosp']}")
-            break
-        call_ids.add(c["id"])
-    for key in ("baseline", "ambulances_plus2"):
-        if key in night:
-            _check_result(f"{p}.{key}", night[key], call_ids, errors)
-    plans = night.get("ai_plans", {})
-    for k in range(1, 7):
-        plan = plans.get(str(k)) if isinstance(plans, dict) else None
-        if plan is None:
-            errors.append(f"{p}.ai_plans: missing budget {k}")
-            continue
-        if len(plan.get("slots", [])) != k:
-            errors.append(f"{p}.ai_plans.{k}: slots must have length {k}")
-        _check_result(f"{p}.ai_plans.{k}", plan, call_ids, errors)
-    lookup = night.get("lookup", {})
-    if isinstance(lookup, dict):
-        if "" not in lookup and "lookup" in night:
-            errors.append(f"{p}.lookup: missing empty plan \"\"")
-        for key, res in lookup.items():
-            if key and key != plan_key(key.split(",")):
-                errors.append(f"{p}.lookup: key not canonical: {key}")
-                break
-            _check_result(f"{p}.lookup[{key}]", res, call_ids, errors)
+    for field in ("label", "calls", "real", "baseline", "ambulances_plus2", "ai_plans", "lookup"):
+        if field not in night:
+            errors.append(f"{w}: missing '{field}'")
+
+    call_ids: set = set()
+    calls = night.get("calls")
+    if calls is not None:
+        if not isinstance(calls, list) or not calls:
+            errors.append(f"{w}.calls: must be a non-empty list")
+        else:
+            for c in calls:
+                if not isinstance(c, dict) or any(k not in c for k in ("id", "t", "lat", "lon", "hosp", "severity")):
+                    errors.append(f"{w}.calls: each call needs id, t, lat, lon, hosp, severity")
+                    break
+                if c["id"] in call_ids:
+                    errors.append(f"{w}.calls: duplicate id {c['id']}")
+                    break
+                call_ids.add(c["id"])
+                if not _is_num(c["t"]) or not 0 <= c["t"] <= NIGHT_T_MAX:
+                    errors.append(f"{w}.calls: t must be 0-{NIGHT_T_MAX} (id {c['id']})")
+                    break
+                if c["hosp"] not in HOSPITAL_IDS:
+                    errors.append(f"{w}.calls: hosp must be A/B/C (id {c['id']})")
+                    break
+
+    if "label" in night and not isinstance(night["label"], str):
+        errors.append(f"{w}.label: must be a string")
+
+    real = night.get("real")
+    if real is not None:
+        for k in ("median_response_min", "median_time_at_hospital_min"):
+            if not isinstance(real, dict) or not _is_num(real.get(k)):
+                errors.append(f"{w}.real: missing number '{k}'")
+
+    for field in ("baseline", "ambulances_plus2"):
+        if field in night:
+            _check_result(night[field], f"{w}.{field}", call_ids, errors)
+
+    ai = night.get("ai_plans")
+    if ai is not None:
+        if not isinstance(ai, dict) or sorted(ai.keys(), key=int) != AI_BUDGETS:
+            errors.append(f"{w}.ai_plans: keys must be '1'-'6'")
+        else:
+            for k, plan in ai.items():
+                pw = f"{w}.ai_plans.{k}"
+                if not isinstance(plan, dict) or "slots" not in plan:
+                    errors.append(f"{pw}: missing 'slots'")
+                    continue
+                if _check_slots(plan["slots"], pw, errors) and len(plan["slots"]) != int(k):
+                    errors.append(f"{pw}: needs exactly {k} slots")
+                _check_result(plan, pw, call_ids, errors)
+
+    lookup = night.get("lookup")
+    if lookup is not None:
+        if not isinstance(lookup, dict):
+            errors.append(f"{w}.lookup: must be an object")
+        else:
+            if "" not in lookup:
+                errors.append(f"{w}.lookup: missing the empty plan ''")
+            for key, res in lookup.items():
+                lw = f"{w}.lookup['{key}']"
+                slots = key.split(",") if key else []
+                if not _check_slots(slots, lw, errors):
+                    break
+                if plan_key(slots) != key:
+                    errors.append(f"{lw}: key not sorted, should be '{plan_key(slots)}'")
+                    break
+                if len(slots) > MAX_LOOKUP_SHIFTS:
+                    errors.append(f"{lw}: more than {MAX_LOOKUP_SHIFTS} shifts")
+                    break
+                before = len(errors)
+                _check_result(res, lw, call_ids, errors)
+                if len(errors) > before:
+                    break
 
 
-def validate_scenarios(d: dict) -> list[str]:
-    """Return a list of human-readable problems; empty list means valid."""
+def validate_scenarios(d) -> list[str]:
     errors: list[str] = []
+    if not isinstance(d, dict):
+        return ["top level: must be an object"]
+
     city = d.get("city")
     if not isinstance(city, dict) or not isinstance(city.get("name"), str) or not isinstance(city.get("area"), str):
-        errors.append("city: must have string name and area")
-    if not isinstance(d.get("blocks"), list) or len(d["blocks"]) != N_BLOCKS:
-        errors.append("blocks: must list 6 blocks")
-    hosps = d.get("hospitals")
-    if not isinstance(hosps, list) or [h.get("id") for h in hosps] != list(HOSPITAL_IDS):
-        errors.append("hospitals: must be A, B, C in order")
-    if not isinstance(d.get("costs"), dict) or not {"nurse_shift_usd", "ambulance_night_usd"} <= set(d["costs"]):
-        errors.append("costs: needs nurse_shift_usd and ambulance_night_usd")
+        errors.append("city: needs string 'name' and 'area'")
+
+    blocks = d.get("blocks")
+    if not isinstance(blocks, list) or len(blocks) != N_BLOCKS:
+        errors.append("blocks: must list 6 block labels")
+
+    hospitals = d.get("hospitals")
+    if not isinstance(hospitals, list) or [h.get("id") for h in hospitals if isinstance(h, dict)] != HOSPITAL_IDS:
+        errors.append("hospitals: must be 3 objects with ids A, B, C in order")
+    else:
+        for h in hospitals:
+            if not _is_num(h.get("lat")) or not _is_num(h.get("lon")):
+                errors.append(f"hospitals: {h.get('id')} needs numeric lat/lon")
+
+    costs = d.get("costs")
+    for k in ("nurse_shift_usd", "ambulance_night_usd"):
+        if not isinstance(costs, dict) or not _is_num(costs.get(k)):
+            errors.append(f"costs: missing number '{k}'")
+
     nights = d.get("nights")
     if not isinstance(nights, dict):
-        errors.append("nights: missing")
+        errors.append("nights: must be an object")
         return errors
-    for name in NIGHTS:
+    for name in REQUIRED_NIGHTS:
         if name not in nights:
-            errors.append(f"nights: missing {name}")
-        else:
-            _check_night(name, nights[name], errors)
+            errors.append(f"nights: missing '{name}'")
+    for name, night in nights.items():
+        if name not in REQUIRED_NIGHTS + OPTIONAL_NIGHTS:
+            errors.append(f"nights: unknown night '{name}'")
+            continue
+        _check_night(name, night, errors)
     return errors

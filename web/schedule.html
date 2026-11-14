@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offload Nurse Schedule</title>
+  <style>
+    :root { --ink: #1d1f23; --muted: #5f636b; --line: #d9d6cc; --paper: #ffffff; --bg: #ecebe6; --accent: #2f5bd3; --sim: #7a4fd1; --real: #1f7a52; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .bar { display: flex; gap: 8px; justify-content: space-between; align-items: center; max-width: 760px; margin: 16px auto 0; padding: 0 16px; }
+    .bar a { color: var(--accent); text-decoration: none; font-size: 14px; }
+    .btn { border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
+    .sheet { background: var(--paper); max-width: 760px; margin: 12px auto 32px; padding: 32px 36px; border-radius: 10px; box-shadow: 0 1px 3px #0002; }
+    h1 { margin: 0; font-size: 24px; }
+    .meta { color: var(--muted); font-size: 14px; margin: 4px 0 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 20px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    td.num { font-variant-numeric: tabular-nums; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; margin: 8px 0 20px; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .summary div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+    .summary b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .summary span { font-size: 12px; color: var(--muted); }
+    .summary span.badge { font-size: 10px; color: #fff; }
+    .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; color: #fff; vertical-align: middle; }
+    .badge.sim { background: var(--sim); }
+    .badge.real { background: var(--real); }
+    .fine { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+    .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; font-size: 12px; color: var(--muted); }
+    .sign div { border-top: 1px solid var(--ink); padding-top: 4px; }
+    .error { color: #8a231c; }
+    @media (max-width: 600px) {
+      .sheet { padding: 20px 16px; border-radius: 0; }
+      .summary { grid-template-columns: 1fr; }
+    }
+    @media print {
+      @page { size: letter; margin: 0.6in; }
+      body { background: #fff; }
+      .bar { display: none; }
+      .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+      .badge { border: 1px solid #000; color: #000; background: none !important; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href="index.html">← Back to planner</a>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+
+  <main class="sheet" id="sheet">
+    <h1>Offload nurse schedule</h1>
+    <p class="meta" id="meta">Loading…</p>
+    <div id="body"></div>
+    <div class="sign">
+      <div>Approved by</div>
+      <div>Date</div>
+    </div>
+  </main>
+
+  <script>
+    const BLOCK_START_HOUR = 18; // block 0 starts at 6 PM, each block is 2 hours
+
+    const planKey = (slots) => [...new Set(slots)].sort().join(",");
+
+    function hourLabel(h) {
+      h = h % 24;
+      const h12 = ((h + 11) % 12) + 1;
+      return `${h12} ${h < 12 ? "AM" : "PM"}`;
+    }
+    const blockLabel = (b) => `${hourLabel(BLOCK_START_HOUR + 2 * b)} to ${hourLabel(BLOCK_START_HOUR + 2 * b + 2)}`;
+    const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    function resultFor(night, slots) {
+      const key = planKey(slots);
+      if (key in night.lookup) return night.lookup[key];
+      // AI plans can be bigger than the lookup covers, so check them too.
+      const ai = Object.values(night.ai_plans).find((p) => planKey(p.slots) === key);
+      return ai ?? null;
+    }
+
+    function fail(msg) {
+      document.getElementById("meta").innerHTML = `<span class="error">${esc(msg)}</span>`;
+    }
+
+    (async function main() {
+      const params = new URLSearchParams(location.search);
+      const nightName = params.get("night") || "typical";
+      const plan = params.get("plan") ?? "";
+      const slots = plan ? plan.split(",") : [];
+
+      let d;
+      try {
+        const res = await fetch("data/scenarios.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        d = await res.json();
+      } catch (e) {
+        return fail("Could not load data/scenarios.json.");
+      }
+      const night = d.nights[nightName];
+      if (!night) return fail(`Unknown night "${nightName}".`);
+      const valid = slots.every((s) => /^[ABC]-[0-5]$/.test(s));
+      if (!valid) return fail("This link has an invalid plan.");
+
+      document.title = `Offload Nurse Schedule · ${night.label}`;
+      document.getElementById("meta").textContent =
+        `${d.city.area}, ${d.city.name} · ${night.label} · Friday 6 PM to Saturday 6 AM`;
+
+      const body = document.getElementById("body");
+      if (slots.length === 0) {
+        body.innerHTML = `<div class="empty">No shifts placed. Go back to the planner and tap a slot to add an offload nurse.</div>`;
+        return;
+      }
+
+      const rows = slots
+        .map((s) => { const [h, b] = s.split("-"); return { h, b: Number(b) }; })
+        .sort((x, y) => x.b - y.b || x.h.localeCompare(y.h));
+
+      const res = resultFor(night, slots);
+      const base = night.baseline.late_ids.length;
+      const cost = slots.length * d.costs.nurse_shift_usd;
+      const extra = res ? base - res.late_ids.length : null;
+
+      body.innerHTML = `
+        <table>
+          <thead><tr><th>Hospital</th><th>Time</th><th>Staff</th><th>Shift cost</th></tr></thead>
+          <tbody>
+            ${rows.map((r) => `
+              <tr>
+                <td><b>Hospital ${esc(r.h)}</b></td>
+                <td>${blockLabel(r.b)}</td>
+                <td>1 offload nurse</td>
+                <td class="num">${money(d.costs.nurse_shift_usd)}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="summary">
+          <div><b>${extra === null ? "n/a" : (extra > 0 ? "+" : "") + extra}</b><span>extra people reached in 10 min <span class="badge sim">SIM</span></span></div>
+          <div><b>${base}${res ? " → " + res.late_ids.length : ""}</b><span>calls over 10 min, before → after <span class="badge sim">SIM</span></span></div>
+          <div><b>${money(cost)}</b><span>total for ${slots.length} shift${slots.length === 1 ? "" : "s"}</span></div>
+        </div>
+        <p class="fine">
+          The expected effect comes from a simulation (SIM) of this night, calibrated to real NYC 911 data
+          (median response ${night.real.median_response_min} min, median time at hospital ${night.real.median_time_at_hospital_min} min <span class="badge real">REAL</span>).
+          It is a planning estimate, not a guarantee. Hospitals are shown as A, B and C. Each call is assumed to go to its nearest hospital.
+          Time at hospital includes cleanup, not only the handoff. Shift costs ($${d.costs.nurse_shift_usd} per 2-hour shift) are placeholders.
+          ${d.fake ? "<br><b>This sheet uses FAKE DATA for building the page.</b>" : ""}
+          Data generated ${esc(d.generated_at)}.
+        </p>`;
+    })();
+  </script>
+</body>
+</html>
