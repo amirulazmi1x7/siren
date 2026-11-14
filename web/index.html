@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offload Planner</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Offload Planner</h1>
+      <p class="sub"><span id="city">Loading</span> · Friday 6 PM to Saturday 6 AM</p>
+    </div>
+    <nav class="nights" id="nights" aria-label="Choose a night"></nav>
+  </header>
+
+  <div class="fake-banner" id="fakeBanner" hidden>FAKE DATA for building the page. Real numbers arrive with the pipeline export.</div>
+
+  <main class="layout">
+    <section class="map-card card">
+      <div class="map-head">
+        <div>
+          <div class="headline"><span><span id="lateCount">0</span> people waited over 10 min</span> <span class="badge sim">SIM</span></div>
+          <div class="muted" id="viewLabel">Showing: do nothing</div>
+        </div>
+        <div class="clock" id="clock">6:00 PM</div>
+      </div>
+      <div class="map-wrap"><svg id="map" role="img" aria-label="Map of calls and hospitals"></svg></div>
+      <div class="replay">
+        <button class="btn primary" id="play">▶ Play night</button>
+        <input type="range" id="time" min="0" max="720" step="1" value="720" aria-label="Time of night">
+      </div>
+      <div class="legend">
+        <span><i class="dot ok"></i>Reached in 10 min</span>
+        <span><i class="dot late"></i>Waited over 10 min</span>
+        <span><i class="amb"></i>Ambulance stuck at the door</span>
+      </div>
+    </section>
+
+    <section class="side">
+      <div class="card">
+        <h2>Real numbers for this night <span class="badge real">REAL</span></h2>
+        <div class="real-stats">
+          <div><b id="realResp">-</b><span>median response</span></div>
+          <div><b id="realHosp">-</b><span>median time at hospital</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row-between">
+          <h2>Place offload nurses</h2>
+          <div class="budget">
+            <span class="muted">Budget</span>
+            <button class="btn small" id="budgetDown" aria-label="Lower budget">−</button>
+            <b id="budget">3</b>
+            <button class="btn small" id="budgetUp" aria-label="Raise budget">+</button>
+          </div>
+        </div>
+        <p class="muted small-text">Tap a slot to add one offload nurse for that 2-hour block.</p>
+        <div class="grid" id="grid"></div>
+        <div class="msg" id="msg" hidden></div>
+        <div class="actions">
+          <button class="btn" id="showAi">Show AI plan</button>
+          <button class="btn ghost" id="clear">Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Compare <span class="badge sim">SIM</span></h2>
+        <p class="muted small-text">Extra people reached in time vs doing nothing. Tap a row to show it on the map.</p>
+        <div id="compare" class="compare"></div>
+        <div class="stats" id="stats"></div>
+      </div>
+
+      <div class="card">
+        <h2>Why it works <span class="badge sim">SIM</span></h2>
+        <p class="muted small-text" id="whyText"></p>
+        <svg id="why" class="why"></svg>
+        <p class="small-text">Real median time at hospital: <b id="whyReal">-</b> <span class="badge real">REAL</span></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Hospitals are shown as A, B and C. Each call goes to its nearest hospital (an assumption).
+    Time at hospital includes cleanup, not only the handoff.
+    Costs ($<span id="nurseCost">180</span> per nurse shift, $<span id="ambCost">3,600</span> for +2 ambulances) are placeholders.
+    <span id="generated"></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
