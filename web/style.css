@@ -131,7 +131,8 @@ h2 { margin: 0 0 6px; font-size: 15px; display: flex; align-items: center; gap: 
 .slot.ai { background: var(--ai); border-color: var(--ai); color: #fff; }
 .best-value { margin-top: -4px; }
 .msg { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #fde8e6; color: #8a231c; font-size: 13px; }
-.actions { display: flex; gap: 8px; margin-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.actions .push-right { margin-left: auto; }
 
 .compare { display: flex; flex-direction: column; gap: 6px; }
 .cmp {

@@ -429,6 +429,12 @@ function wire() {
     render();
   };
   document.getElementById("clear").onclick = () => { state.slots = []; state.msg = ""; state.view = "yours"; render(); };
+  document.getElementById("sendSchedule").onclick = () => {
+    // The sheet shows the plan you're looking at: the AI plan when it's shown, otherwise yours.
+    const slots = state.view === "ai" ? night().ai_plans[String(state.budget)].slots : state.slots;
+    const q = new URLSearchParams({ night: state.nightName, plan: planKey(slots) });
+    window.open(`schedule.html?${q}`, "_blank");
+  };
   document.getElementById("play").onclick = () => setPlaying(!state.playing);
   document.getElementById("time").addEventListener("input", (e) => {
     setPlaying(false);
