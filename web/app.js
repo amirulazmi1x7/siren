@@ -57,6 +57,22 @@ function currentResult(view = state.view) {
   return resultFor(n, state.slots);
 }
 
+// "Best value" budget: the fewest shifts that get most of the benefit of the
+// biggest AI plan. Capped at 4 so the user can place that many themselves.
+const BEST_VALUE_SHARE = 0.8;
+
+function bestValue(n = night()) {
+  const base = n.baseline.late_ids.length;
+  const gain = (k) => base - n.ai_plans[String(k)].late_ids.length;
+  const maxGain = gain(6);
+  if (maxGain <= 0) return { k: 1, gain: 0, share: 0 };
+  for (let k = 1; k <= MAX_LOOKUP_SHIFTS; k++) {
+    if (gain(k) >= BEST_VALUE_SHARE * maxGain) return { k, gain: gain(k), share: gain(k) / maxGain };
+  }
+  const k = MAX_LOOKUP_SHIFTS;
+  return { k, gain: gain(k), share: gain(k) / maxGain };
+}
+
 function costOf(view) {
   const c = state.data.costs;
   if (view === "amb") return c.ambulance_night_usd;
@@ -233,6 +249,11 @@ function renderGrid() {
   grid.innerHTML = parts.join("");
 
   document.getElementById("budget").textContent = state.budget;
+  const bv = bestValue();
+  document.getElementById("bestValue").textContent = bv.gain > 0
+    ? `Best value: ${bv.k} shift${bv.k === 1 ? "" : "s"} reach ${bv.gain} more people in time, ` +
+      `${Math.round(bv.share * 100)}% of what 6 shifts would.`
+    : "Extra nurses don't change late calls on this night.";
   document.getElementById("showAi").classList.toggle("active", state.view === "ai");
   const msg = document.getElementById("msg");
   msg.hidden = !state.msg;
@@ -380,6 +401,7 @@ function setNight(name) {
   state.slots = [];
   state.msg = "";
   state.view = "yours";
+  state.budget = bestValue().k;
   drawNightOnMap();
   render();
 }
