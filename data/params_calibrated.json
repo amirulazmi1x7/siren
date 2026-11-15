@@ -1,0 +1,117 @@
+{
+  "params": {
+    "n_ambulances": 26,
+    "speed_kmh": 12.0,
+    "dispatch_delay_min": 0.6,
+    "scene_min": 15.0,
+    "door_capacity": [
+      [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        5
+      ],
+      [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ]
+    ],
+    "handoff_mean_min": 40.0,
+    "cleanup_min": 10.0,
+    "nurse_handoff_min": 20.0,
+    "nurse_patients": 4,
+    "urgent_max_severity": 3,
+    "outside_travel_min": 12.0
+  },
+  "target": {
+    "median_response_min": 10.13,
+    "median_time_at_hospital_min": 44.3,
+    "urgent_median_response_min": 7.33,
+    "urgent_late_share": 0.2352,
+    "response_by_block": [
+      11.5,
+      9.55,
+      9.68,
+      9.87,
+      10.28,
+      9.98
+    ],
+    "late_share_by_block": [
+      0.2832,
+      0.2157,
+      0.2242,
+      0.2217,
+      0.2192,
+      0.2352
+    ],
+    "tah_by_block": [
+      44.08,
+      45.25,
+      44.75,
+      44.08,
+      44.08,
+      41.73
+    ]
+  },
+  "sim": {
+    "median_response_min": 7.18,
+    "median_time_at_hospital_min": 43.39,
+    "urgent_median_response_min": 7.13,
+    "urgent_late_share": 0.2502,
+    "response_by_block": [
+      3.76,
+      8.76,
+      8.87,
+      7.62,
+      6.21,
+      5.74
+    ],
+    "late_share_by_block": [
+      0.1684,
+      0.3536,
+      0.3294,
+      0.2648,
+      0.1465,
+      0.1357
+    ],
+    "tah_by_block": [
+      45.43,
+      44.31,
+      45.36,
+      44.36,
+      40.43,
+      39.85
+    ]
+  },
+  "nights": [
+    "2025-11-21",
+    "2026-01-23",
+    "2024-03-15",
+    "2025-04-11",
+    "2026-07-03",
+    "2026-05-22",
+    "2025-12-26",
+    "2025-06-27",
+    "2026-05-08",
+    "2025-10-03",
+    "2025-01-24",
+    "2026-06-26",
+    "2026-08-21",
+    "2025-07-04",
+    "2025-06-06"
+  ]
+}

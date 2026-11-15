@@ -1,9 +1,9 @@
 from sim.model import SimParams, run_night
 from tests.sim.toy import jammed_a_night
 
-# A small fleet and a slow door at hospital A, so A's door jams.
-TIGHT = SimParams(n_ambulances=14, door_capacity=((1,) * 6, (2,) * 6, (2,) * 6), handoff_mean_min=30)
-CONSERVATIVE = SimParams(n_ambulances=14, door_capacity=((1,) * 6, (2,) * 6, (2,) * 6), handoff_mean_min=30,
+# A small local fleet and most patients going to hospital A, so A's door is busy but not hopeless.
+TIGHT = SimParams(n_ambulances=10, door_capacity=((3,) * 6,) * 3, handoff_mean_min=30)
+CONSERVATIVE = SimParams(n_ambulances=10, door_capacity=((3,) * 6,) * 3, handoff_mean_min=30,
                          nurse_handoff_min=30, nurse_patients=3)
 
 
@@ -62,3 +62,35 @@ def test_shapes():
     r = run_night(jammed_a_night(), TIGHT, seed=0)
     assert len(r.stuck) == 3 and all(len(row) == 6 for row in r.stuck)
     assert len(r.door_wait_min) == 3 and all(len(row) == 6 for row in r.door_wait_min)
+
+
+def test_hosp_visits_match_time_at_hosp():
+    r = run_night(jammed_a_night(), TIGHT, seed=0)
+    assert sorted(v for _, _, v in r.hosp_visits) == sorted(r.time_at_hosp_min)
+    assert all(h in "ABC" and 0 <= b < 6 for h, b, _ in r.hosp_visits)
+
+
+def test_outside_unit_covers_urgent_calls_when_local_fleet_is_busy():
+    # 2 local ambulances can't cover a busy night; outside units keep URGENT responses bounded
+    p = SimParams(n_ambulances=2, door_capacity=((3,) * 6,) * 3, handoff_mean_min=30, outside_travel_min=14)
+    calls = jammed_a_night()
+    r = run_night(calls, p, seed=0)
+    urgent = [c["id"] for c in calls if c["severity"] <= 3]
+    assert max(r.response_min[i] for i in urgent) <= p.dispatch_delay_min + 1.5 * p.outside_travel_min + 0.01
+    assert r.outside_responses > 0
+
+
+def test_non_urgent_calls_wait_for_local_units_never_outside():
+    p = SimParams(n_ambulances=2, door_capacity=((3,) * 6,) * 3, handoff_mean_min=30, outside_travel_min=14)
+    calls = jammed_a_night()
+    r = run_night(calls, p, seed=0)
+    n_urgent = sum(c["severity"] <= 3 for c in calls)
+    assert r.outside_responses <= n_urgent
+    non_urgent = [r.response_min[c["id"]] for c in calls if c["severity"] > 3]
+    assert max(non_urgent) > 1.5 * p.outside_travel_min      # held calls wait longer than any outside unit
+
+
+def test_stuck_local_fleet_means_more_outside_responses():
+    base = run_night(jammed_a_night(), TIGHT, seed=0)
+    nurse = run_night(jammed_a_night(), TIGHT, frozenset({"A-2", "A-3"}), seed=0)
+    assert nurse.outside_responses <= base.outside_responses

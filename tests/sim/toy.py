@@ -2,7 +2,7 @@
 import random
 
 
-def jammed_a_night(n: int = 220, seed: int = 3) -> list[dict]:
+def jammed_a_night(n: int = 120, seed: int = 3) -> list[dict]:
     """Most calls near hospital A and transported, so A's door jams in blocks 2-4."""
     r = random.Random(seed)
     calls = []
