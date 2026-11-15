@@ -1,0 +1,40 @@
+/* Design tokens. Light theme only: the page is shown on projectors. */
+:root {
+  color-scheme: light;
+  --bg: #f3f2ed;
+  --card: #ffffff;
+  --ink: #16181c;
+  --muted: #50545b;
+  --line: #d8d5cb;
+  --ok: #1f7f55;
+  --late: #c42b22;
+  --amb: #d98a12;
+  --amb-edge: #5a3a00;
+  --accent: #2450c4;
+  --accent-soft: #e3e9fa;
+  --ai: #6a3fc4;
+  --ai-soft: #ece4fb;
+  --real: #1a6e49;
+  --sim: #6a3fc4;
+  --warn-bg: #fff3cd;
+  --warn-ink: #5c4300;
+  --error-bg: #fde8e6;
+  --error-ink: #7a1d17;
+
+  --radius: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.45 var(--font);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}

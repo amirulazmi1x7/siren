@@ -92,6 +92,10 @@ function clockLabel(t) {
 // ---------- map ----------
 
 const map = { svg: null, proj: null, w: 600, h: 600, dots: null, hosp: null, geo: null };
+// Late vs on-time differs by shape AND color (on-time = small circle, late = larger triangle),
+// so the map still reads for color-blind viewers and on washed-out projectors.
+const SHAPE_OK = d3.symbol(d3.symbolCircle, 34)();
+const SHAPE_LATE = d3.symbol(d3.symbolTriangle, 80)();
 const PAD = 16;
 
 // Zip code shapes are optional: if the file is missing the map still works on a blank background.
@@ -136,14 +140,13 @@ function drawNightOnMap() {
   }
 
   map.dots = map.svg.select("g.calls")
-    .selectAll("circle")
+    .selectAll("path")
     .data(n.calls, (c) => c.id)
-    .join("circle")
+    .join("path")
     .attr("class", "call")
     .attr("fill", "var(--ok)")
-    .attr("r", 4)
-    .attr("cx", (c) => map.proj([c.lon, c.lat])[0])
-    .attr("cy", (c) => map.proj([c.lon, c.lat])[1]);
+    .attr("d", SHAPE_OK)
+    .attr("transform", (c) => `translate(${map.proj([c.lon, c.lat]).join(",")})`);
   map.dots.selectAll("title").remove();
   map.dots.append("title").text((c) => `Call ${c.id} · ${clockLabel(c.t)} · goes to Hospital ${c.hosp}`);
 
@@ -153,9 +156,10 @@ function drawNightOnMap() {
     .join((enter) => {
       const g = enter.append("g").attr("class", "h");
       g.append("circle").attr("class", "hosp-ring").attr("fill", "var(--late)").attr("opacity", 0.18);
-      g.append("rect").attr("x", -11).attr("y", -11).attr("width", 22).attr("height", 22).attr("rx", 5).attr("fill", "#1d1f23").attr("stroke", "#fff").attr("stroke-width", 1.5);
+      g.append("rect").attr("x", -14).attr("y", -14).attr("width", 28).attr("height", 28).attr("rx", 6).attr("fill", "#16181c").attr("stroke", "#fff").attr("stroke-width", 2);
       g.append("text").attr("class", "hosp-label").text((h) => h.id);
       g.append("g").attr("class", "queue");
+      g.append("text").attr("class", "queue-count").attr("x", 20).attr("y", 30);
       g.append("title");
       return g;
     })
@@ -169,23 +173,26 @@ function updateMap() {
 
   map.dots
     .attr("fill", (c) => (late.has(c.id) ? "var(--late)" : "var(--ok)"))
-    .attr("opacity", (c) => (c.t <= state.t ? 0.85 : 0));
+    .attr("d", (c) => (late.has(c.id) ? SHAPE_LATE : SHAPE_OK))
+    .attr("opacity", (c) => (c.t <= state.t ? 0.9 : 0));
+  map.dots.filter((c) => late.has(c.id)).raise(); // late calls draw on top
 
   map.hosp.each(function (h, i) {
     const stuck = res.stuck[i][blk];
     const n = Math.round(stuck);
     const g = d3.select(this);
-    g.select(".hosp-ring").attr("r", 14 + Math.min(stuck, 12) * 2.2);
+    g.select(".hosp-ring").attr("r", 18 + Math.min(stuck, 12) * 2.2);
+    g.select(".queue-count").text(n > 0 ? `${n} waiting` : "");
     g.select("title").text(`Hospital ${h.id}: about ${stuck} ambulances waiting at the door, ${res.door_wait_min[i][blk]} min at hospital (SIM)`);
     g.select(".queue")
       .selectAll("rect")
       .data(d3.range(Math.min(n, 12)))
       .join("rect")
-      .attr("width", 10)
-      .attr("height", 6)
-      .attr("rx", 1.5)
-      .attr("x", (k) => 16 + (k % 6) * 12)
-      .attr("y", (k) => -7 + Math.floor(k / 6) * 8);
+      .attr("width", 15)
+      .attr("height", 10)
+      .attr("rx", 2)
+      .attr("x", (k) => 20 + (k % 6) * 18)
+      .attr("y", (k) => -12 + Math.floor(k / 6) * 13);
   });
 
   document.getElementById("clock").textContent = clockLabel(state.t);
@@ -238,7 +245,7 @@ function renderGrid() {
       const key = `${h}-${b}`;
       const cls = aiSlots.has(key) ? "ai" : mine.has(key) ? "on" : "";
       const heat = base.stuck[i][b] / maxStuck;
-      const label = cls ? "+1" : "";
+      const label = cls === "ai" ? "AI" : cls === "on" ? "+1" : "";
       parts.push(
         `<button class="slot ${cls}" data-slot="${key}" aria-pressed="${!!cls}" ` +
           `title="Hospital ${h}, ${blocks[b]}: ${base.stuck[i][b]} ambulances stuck if you do nothing (SIM)">` +
@@ -343,7 +350,7 @@ function renderWhy() {
   const h = HOSP_IDS[hi];
 
   document.getElementById("whyText").textContent =
-    `Hospital ${h} has the most ambulances stuck at its door. Minutes each ambulance spends at Hospital ${h}, by block: do nothing vs ${VIEWS[state.view].name.toLowerCase()}.`;
+    `Hospital ${h} has the most ambulances stuck at its door. Minutes each ambulance spends at Hospital ${h}, by block: do nothing vs ${VIEWS[state.view].name.toLowerCase().replace("ai ", "AI ")}.`;
   document.getElementById("whyReal").textContent = `${n.real.median_time_at_hospital_min} min`;
 
   const svg = d3.select("#why");
@@ -382,7 +389,7 @@ function renderHeader() {
   const n = night();
   document.getElementById("realResp").textContent = `${n.real.median_response_min} min`;
   document.getElementById("realHosp").textContent = `${n.real.median_time_at_hospital_min} min`;
-  document.getElementById("viewLabel").textContent = `Showing: ${VIEWS[state.view].name.toLowerCase()} · ${n.label}`;
+  document.getElementById("viewLabel").textContent = `Showing: ${VIEWS[state.view].name.toLowerCase().replace("ai ", "AI ")} · ${n.label}`;
   document.getElementById("nurseCost").textContent = d.costs.nurse_shift_usd.toLocaleString("en-US");
   document.getElementById("ambCost").textContent = d.costs.ambulance_night_usd.toLocaleString("en-US");
   document.getElementById("generated").textContent = `Data generated ${d.generated_at}.`;
