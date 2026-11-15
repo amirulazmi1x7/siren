@@ -1,0 +1,69 @@
+/* The marker is anchored at the hospital badge's center (see MapView: offset). */
+.marker {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px auto;
+  grid-template-rows: 30px auto;
+  column-gap: 6px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: #16181c;
+  border: 2px solid #fff;
+  color: #fff;
+  font: 700 15px var(--font);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+.marker:hover .badge,
+.marker:focus-visible .badge {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.queue {
+  display: grid;
+  grid-template-columns: repeat(6, 15px);
+  gap: 3px;
+}
+
+.amb {
+  width: 15px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--amb);
+  border: 1px solid var(--amb-edge);
+  animation: arrive 260ms var(--ease-out) both;
+}
+
+.count {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  font: 700 15px var(--font);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}

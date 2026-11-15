@@ -9,13 +9,21 @@ import Map, {
 } from "react-map-gl/maplibre";
 import { usePlanner } from "../state/PlannerContext";
 import { MAX_BOUNDS, MAX_ZOOM, MIN_ZOOM, ONLINE_STYLE_URL, boundsOf, hidePlaceLabels } from "./basemap";
+import { DeckOverlay } from "./DeckOverlay";
+import { HospitalMarker } from "./HospitalMarker";
+import { Legend } from "./Legend";
+import { callLayers, orderCalls } from "./layers";
 import css from "./MapView.module.css";
 
-const FIT_PADDING = 48;
+const FIT_PADDING = 56;
 const FLY_MS = 1200;
+const FOCUS_ZOOM = 14.5;
+const FOCUS_MS = 800;
+/** Hospital badge is 30px; anchor its center on the hospital. */
+const BADGE_HALF = 15;
 
 export function MapView() {
-  const { data, derived } = usePlanner();
+  const { data, state, derived } = usePlanner();
   const mapRef = useRef<MapRef>(null);
   const [tileError, setTileError] = useState(false);
 
@@ -31,7 +39,7 @@ export function MapView() {
     if (import.meta.env.DEV) (window as unknown as { __map: typeof map }).__map = map;
   }, []);
 
-  // Fly to the study area whenever the night changes (skips the first render: initialViewState handles it).
+  // Fly to the study area whenever the night changes (skip first render: initialViewState handles it).
   const firstFit = useRef(true);
   useEffect(() => {
     if (firstFit.current) {
@@ -40,6 +48,21 @@ export function MapView() {
     }
     mapRef.current?.fitBounds(bounds, { padding: FIT_PADDING, duration: FLY_MS });
   }, [bounds]);
+
+  const focusHospital = useCallback((lon: number, lat: number) => {
+    mapRef.current?.easeTo({ center: [lon, lat], zoom: FOCUS_ZOOM, duration: FOCUS_MS });
+  }, []);
+
+  // Late calls draw on top; recompute only when the night or the result changes, not every frame.
+  const resultKey = useMemo(() => derived.shown.late_ids.join(","), [derived.shown]);
+  const ordered = useMemo(() => orderCalls(derived.night.calls, derived.lateIds), [derived.night, derived.lateIds]);
+  const layers = callLayers({
+    calls: ordered,
+    lateIds: derived.lateIds,
+    t: state.t,
+    playing: state.playing,
+    resultKey,
+  });
 
   return (
     <div className={css.wrap} data-testid="map">
@@ -61,18 +84,23 @@ export function MapView() {
         }}
         style={{ position: "absolute", inset: 0 }}
       >
+        {/* interleaved: draw inside MapLibre's own WebGL context, so HTML markers and the legend stay on top. */}
+        <DeckOverlay interleaved layers={layers} />
         <NavigationControl position="top-right" showCompass={false} />
         <ScaleControl position="bottom-right" unit="imperial" />
         <AttributionControl position="bottom-right" compact />
-        {data.hospitals.map((h) => (
-          <Marker key={h.id} longitude={h.lon} latitude={h.lat} anchor="center">
-            <div className={css.hospital} aria-label={`Hospital ${h.id}`}>
-              {h.id}
-            </div>
+        {data.hospitals.map((h, i) => (
+          <Marker key={h.id} longitude={h.lon} latitude={h.lat} anchor="top-left" offset={[-BADGE_HALF, -BADGE_HALF]}>
+            <HospitalMarker
+              id={h.id}
+              stuck={derived.shown.stuck[i]?.[derived.block] ?? 0}
+              waitMin={derived.shown.door_wait_min[i]?.[derived.block] ?? 0}
+              onSelect={() => focusHospital(h.lon, h.lat)}
+            />
           </Marker>
         ))}
       </Map>
-      <div className={css.note}>Call locations are approximate (zip code area)</div>
+      <Legend />
       {tileError && (
         <div className={css.error} role="status">
           Street map tiles could not load (no internet?). Data still works; use the offline page if needed.
