@@ -37,7 +37,7 @@ export function CompareCard() {
         Compare <Badge kind="sim" />
       </h2>
       <p className="muted small">
-        Extra people reached in time vs doing nothing, from one simulated run. Tap a row to show it on the map.
+        Extra people reached in time vs doing nothing, from one rehearsal run. Tap a row to show it on the map.
       </p>
 
       <div className={css.rows}>

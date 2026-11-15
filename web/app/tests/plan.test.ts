@@ -5,6 +5,7 @@ import {
   aiPlan,
   bestValue,
   costOf,
+  perAmbulanceCost,
   extraReached,
   fitSlotsToBudget,
   mostJammedHospital,
@@ -58,8 +59,8 @@ describe("resultForView / costOf", () => {
 
   it("prices each view", () => {
     expect(costOf(costs, "nothing", 2, 3)).toBe(0);
-    // ambulance_night_usd is per ambulance; +2 ambulances costs twice that.
-    expect(costOf(costs, "amb", 2, 3)).toBe(2 * costs.ambulance_night_usd);
+    // +2 ambulances = twice the per-ambulance price (ambulance_each_night_usd in newer exports).
+    expect(costOf(costs, "amb", 2, 3)).toBe(2 * perAmbulanceCost(costs));
     expect(costOf(costs, "yours", 2, 3)).toBe(2 * costs.nurse_shift_usd);
     expect(costOf(costs, "ai", 2, 3)).toBe(3 * costs.nurse_shift_usd);
   });
@@ -90,8 +91,9 @@ describe("misc", () => {
     expect(sums[index]).toBe(Math.max(...sums));
   });
 
-  it("keeps AI capitalised mid-sentence", () => {
-    expect(viewNameInline("ai")).toBe("AI plan");
+  it("names views in agent terms mid-sentence", () => {
+    expect(viewNameInline("ai")).toBe("the agent's nurse plan");
+    expect(viewNameInline("rec")).toBe("the agent's pick");
     expect(viewNameInline("yours")).toBe("your plan");
   });
 });

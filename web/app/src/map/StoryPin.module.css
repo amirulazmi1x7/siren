@@ -1,0 +1,58 @@
+.pin {
+  position: relative;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--ok);
+  background: rgb(31 127 85 / 0.12);
+  box-shadow: 0 0 0 2px #fff;
+  animation:
+    appear 400ms var(--ease-out) both,
+    pulse 1.8s ease-out 400ms infinite;
+}
+.label {
+  position: absolute;
+  left: 22px;
+  top: -13px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+  color: var(--ink);
+  font: 600 14px var(--font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  animation: appear 400ms var(--ease-out) both;
+}
+.flip {
+  left: auto;
+  right: 22px;
+}
+.before { color: var(--late); }
+.after { color: var(--ok); }
+.sim {
+  margin-left: 2px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  vertical-align: 0.15em;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: scale(0.6); }
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 2px #fff, 0 0 0 0 rgb(31 127 85 / 0.45); }
+  100% { box-shadow: 0 0 0 2px #fff, 0 0 0 14px rgb(31 127 85 / 0); }
+}

@@ -54,3 +54,16 @@ Verdicts: true / partly true / unsupported / false. "Vendor" marks industry or v
 - $150 sits inside this roughly $75-220 range but cannot be cited to a source.
 
 **Slide:** "Ambulance unit-hours cost an estimated $75-220 each, varying by system" (or present $150 as a stated model assumption).
+
+## 7. Offload nurse cost of about $90/hr ($180 per 2-hour shift)
+**Verdict: true as an estimate.** It sits between the fully loaded cost of a staff RN in NYC and overtime pay. Checked 2026-11-14 night (Person B).
+- **Wage:** BLS OEWS May 2023, New York-Newark-Jersey City metro, registered nurses: mean **$53.47/hr** ($111,210/yr). This is the latest metro figure confirmed; the May 2024 metro figure was not verified. https://www.bls.gov/oes/2023/may/oes291141.htm
+- **Fully loaded cost:** BLS Employer Costs for Employee Compensation, registered nurses in hospitals (Dec 2024): wages are **64.2%** of total compensation (the rest is benefits, paid leave, payroll taxes). $53.47 / 0.642 ≈ **$83/hr** to the hospital at regular pay. https://www.bls.gov/opub/ted/2025/charting-compensation-costs-during-national-nurses-month.htm
+  - Context: all hospital workers averaged $67.64/hr in total compensation in June 2024, with wages 66.1% of it. https://www.bls.gov/opub/ted/2024/compensation-costs-67-64-per-hour-in-hospitals-june-2024.htm
+- **If the shift is extra hours (likely for an add-on offload shift):** overtime at 1.5x wage plus the same benefits ≈ **$105-110/hr**. Agency/travel RN bill rates ≈ **$90/hr** (SIA/NATHO, vendor data, see section 4).
+- **Union pay context:** NYC Health + Hospitals RN starting salary rose to about **$106,000/yr** under the 2023 NYSNA contract (union announcement as reported). https://www.amny.com/news/nyc-public-nurses-win-historic-pay-bump-in-new-union-contract and https://www.nysna.org/press/2023/nyc-public-hospital-nurses-win-historic-contract-pay-parity-and-safe-staffing
+- **Real program cross-check (floor, not a NYC estimate):** Ontario committed CA$51M over 3 years (Aug 2023) for about 800,000 dedicated offload hours, about **CA$64/hr** (≈ US$46). Canadian wages and staffing mix are lower. https://rmh.org/news-releases/ontario-ministry-of-health-to-provide-up-to-195-000-in-funding-for-a-dedicated-offload-nurse-program
+- **What the model assumes the nurse does** (`sim/model.py`): takes up to 4 patients at once off crews during the 2-hour block; each crew is released after 20 min. These two numbers are assumptions, not fitted to data.
+
+**Slide:** "An offload nurse costs the hospital about $83-110/hr in NYC (BLS wage + benefits; overtime at the top end), so a 2-hour shift is about $165-220." Footnote: the page uses $180.
+**Weaker point to watch:** the ambulance cost ($220/unit-hour, section 6 range $75-220) drives most of the "nurses are cheaper" gap, not the nurse cost.

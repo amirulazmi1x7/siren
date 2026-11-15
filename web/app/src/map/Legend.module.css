@@ -1,24 +1,24 @@
 .legend {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 4px 16px;
+  gap: 2px 14px;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 12px;
 }
 .legend span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 .bar {
   display: inline-block;
-  width: 10px;
-  height: 12px;
-  border-radius: 2px;
-  background: #8a94a3;
+  width: 8px;
+  height: 10px;
+  border-radius: 1px;
+  background: rgb(17 20 24 / 0.5);
 }
 .note {
   color: var(--muted);
-  font-size: 13px;
 }

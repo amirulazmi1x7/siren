@@ -28,7 +28,16 @@ export function useAnimatedNumber(target: number, ms = 500, instant = false): nu
       if (k < 1) raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    // Browsers pause animation frames in hidden windows; make sure we still land on the target.
+    const done = window.setTimeout(() => {
+      cancelAnimationFrame(raf);
+      from.current = target;
+      setValue(target);
+    }, duration + 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(done);
+    };
   }, [target, ms, instant]);
 
   return value;

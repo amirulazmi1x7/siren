@@ -13,7 +13,7 @@ export function PlanCard() {
   const maxStuck = Math.max(1, ...base.stuck.flat());
 
   const sendSchedule = () => {
-    // The sheet shows the plan on screen: the AI plan when shown, otherwise yours.
+    // The sheet shows the plan on screen: the agent's nurse plan when shown, otherwise yours.
     const slots = slotsForView(night, state.view === "ai" ? "ai" : "yours", state.slots, state.budget);
     const q = new URLSearchParams({ night: state.nightName, plan: planKey(slots) });
     window.open(`${import.meta.env.BASE_URL}schedule.html?${q}`, "_blank", "noopener");
@@ -77,7 +77,8 @@ export function PlanCard() {
             {Array.from({ length: N_BLOCKS }, (_, b) => {
               const slot = `${h}-${b}` as Slot;
               const on = shownSlots.has(slot);
-              const isAi = on && state.view === "ai";
+              // Slots placed by the agent (its pick or its nurse plan) are labelled "Agent", yours "+1".
+              const isAi = on && (state.view === "ai" || state.view === "rec");
               const stuck = base.stuck[i]?.[b] ?? 0;
               const heat = stuck / maxStuck;
               return (
@@ -90,7 +91,7 @@ export function PlanCard() {
                   title={`Hospital ${h}, ${data.blocks[b]}: ${stuck} ambulances stuck if you do nothing (SIM)`}
                   onClick={() => dispatch({ type: "toggleSlot", slot })}
                 >
-                  {on ? (isAi ? "AI" : "+1") : ""}
+                  {on ? (isAi ? "Agent" : "+1") : ""}
                   <span
                     className={css.heat}
                     style={{ width: `calc((100% - 6px) * ${heat.toFixed(2)})`, opacity: 0.2 + 0.8 * heat }}
@@ -117,7 +118,7 @@ export function PlanCard() {
           aria-pressed={state.view === "ai"}
           onClick={() => dispatch({ type: "toggleAi" })}
         >
-          Show AI plan
+          Show agent's plan
         </button>
         <button type="button" className="btn ghost" onClick={() => dispatch({ type: "clear" })}>
           Clear

@@ -14,7 +14,7 @@ import { optionById, optionResult, pickFor } from "./recommend";
 
 export const MIN_BUDGET = 1;
 export const MAX_BUDGET = 6;
-/** Best value = fewest shifts reaching at least this share of the 6-shift AI plan's benefit. */
+/** Best value = fewest shifts reaching at least this share of the 6-shift agent nurse plan's benefit. */
 export const BEST_VALUE_SHARE = 0.8;
 
 export type View = "nothing" | "amb" | "rec" | "yours" | "ai";
@@ -24,15 +24,16 @@ export const VIEWS: View[] = ["nothing", "amb", "rec", "yours", "ai"];
 export const VIEW_META: Record<View, { name: string; color: string }> = {
   nothing: { name: "Do nothing", color: "var(--muted)" },
   amb: { name: "+2 ambulances", color: "var(--amb)" },
-  rec: { name: "Planner's pick", color: "var(--rec)" },
+  rec: { name: "Agent's pick", color: "var(--rec)" },
   yours: { name: "Your plan", color: "var(--accent)" },
-  ai: { name: "AI plan", color: "var(--ai)" },
+  ai: { name: "Agent's nurse plan", color: "var(--ai)" },
 };
 
-/** "your plan", "AI plan": view name for use mid-sentence. */
+/** "your plan", "the agent's pick": view name for use mid-sentence. */
 export function viewNameInline(v: View): string {
-  if (v === "rec") return "the planner's pick";
-  return VIEW_META[v].name.toLowerCase().replace(/^ai /, "AI ");
+  if (v === "rec") return "the agent's pick";
+  if (v === "ai") return "the agent's nurse plan";
+  return VIEW_META[v].name.toLowerCase();
 }
 
 export function clampBudget(b: number): number {
@@ -78,9 +79,14 @@ export function resultForView(
   }
 }
 
-/** +2 ambulances for the night. Read from the export when present; ambulance_night_usd is per ambulance. */
+/** One extra ambulance for one night. Newer exports have a dedicated field; older ones used ambulance_night_usd. */
+export function perAmbulanceCost(costs: Scenarios["costs"]): number {
+  return costs.ambulance_each_night_usd ?? costs.ambulance_night_usd;
+}
+
+/** +2 ambulances for the night. The export's own option cost wins when present. */
 export function twoAmbulanceCost(costs: Scenarios["costs"], night?: Night): number {
-  return (night && optionById(night, "amb2")?.cost_usd) ?? 2 * costs.ambulance_night_usd;
+  return (night && optionById(night, "amb2")?.cost_usd) ?? 2 * perAmbulanceCost(costs);
 }
 
 export function costOf(
@@ -145,7 +151,7 @@ export type ToggleOutcome =
 export function toggleSlot(slots: Slot[], slot: Slot, budget: number): ToggleOutcome {
   if (slots.includes(slot)) return { ok: true, slots: slots.filter((s) => s !== slot) };
   if (slots.length >= MAX_LOOKUP_SHIFTS) {
-    return { ok: false, slots, message: "We precomputed plans up to 4 shifts. Remove one or press Show AI plan." };
+    return { ok: false, slots, message: "We precomputed plans up to 4 shifts. Remove one or press Show agent's plan." };
   }
   if (slots.length >= budget) {
     return {

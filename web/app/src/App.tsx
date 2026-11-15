@@ -1,5 +1,5 @@
 import { AgentPanel } from "./components/AgentPanel";
-import { MapHud } from "./components/MapHud";
+import { RightRail } from "./components/RightRail";
 import { Timeline } from "./components/Timeline";
 import { TopBar } from "./components/TopBar";
 import { useScenarios } from "./hooks/useScenarios";
@@ -28,26 +28,37 @@ function Shell() {
   const { data, state } = usePlanner();
   return (
     <div className={css.shell} data-phase={state.phase}>
-      <TopBar />
-      {data.fake && (
-        <div className={css.fake} role="note">
-          FAKE DATA for building the page. Real numbers arrive with the pipeline export.
-        </div>
-      )}
-      {/* The map is the stage; the agent speaks over it, the replay controls dock at the bottom. */}
-      <main className={css.stage}>
-        <div className={css.map} aria-label="Map of the night">
-          <MapView />
-        </div>
-        <div className={css.rail}>
-          <AgentPanel />
-        </div>
-        {state.phase !== "brief" && <MapHud />}
-        <div className={css.dock}>
+      {/* The map fills the screen; everything else floats on top as glass. */}
+      <div className={css.map} aria-label="Map of the night">
+        <MapView />
+      </div>
+      <div className={css.overlay}>
+        <TopBar />
+        {data.fake && (
+          <div className={css.fake} role="note">
+            FAKE DATA for building the page. Real numbers arrive with the pipeline export.
+          </div>
+        )}
+        <main className={css.middle}>
+          <div className={css.left}>
+            <AgentPanel />
+          </div>
+          <div className={css.right}>
+            <RightRail />
+          </div>
+        </main>
+        <div className={css.bottom}>
           <Timeline />
-          <Legend />
+          <div className={`glass ${css.legend}`}>
+            <Legend />
+          </div>
+          <p className={css.ps}>
+            <b>P.S.</b> An <b>offload nurse</b> waits at the ER door and takes patients off ambulance crews, so a crew
+            can leave in minutes instead of waiting for a bed and get back to 911 calls. Ontario, Canada funds this; the
+            agent tests where and when it helps most here.
+          </p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

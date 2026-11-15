@@ -3,6 +3,7 @@ import { type NightName, type Scenarios, type Slot, parsePlanKey, planKey, resul
 import { money, plural, signed } from "../lib/format";
 import { blockLabel } from "../lib/time";
 import { Badge } from "../components/Badge";
+import { perAmbulanceCost } from "../lib/plan";
 import css from "./ScheduleSheet.module.css";
 
 /** Printable shift sheet. URL: schedule.html?night=<name>&plan=<plan key> (same as the old page). */
@@ -17,7 +18,7 @@ export function ScheduleSheet() {
         </button>
       </div>
       <main className={css.sheet}>
-        <h1 className={css.title}>Offload nurse schedule</h1>
+        <h1 className={css.title}>AmbuReady shift schedule</h1>
         {s.status === "loading" && <p className="muted">Loading…</p>}
         {s.status === "error" && <Problem text="Could not load scenarios.json." />}
         {s.status === "ready" && <SheetBody data={s.data} />}
@@ -41,7 +42,7 @@ function SheetBody({ data }: { data: Scenarios }) {
   const amb = Number(params.get("amb") ?? "0");
   if (!Number.isInteger(amb) || amb < 0 || amb > 2) return <Problem text="This link has an invalid ambulance count." />;
 
-  document.title = `Offload Nurse Schedule · ${night.label}`;
+  document.title = `AmbuReady shift schedule · ${night.label}`;
   const meta = (
     <p className={css.meta}>
       {data.city.area}, {data.city.name} · {night.label} · Friday 6 PM to Saturday 6 AM
@@ -67,7 +68,7 @@ function SheetBody({ data }: { data: Scenarios }) {
     .sort((x, y) => x.b - y.b || x.h.localeCompare(y.h));
 
   // If this plan is one of the planner's options, use its averaged numbers (same as the recommendation card).
-  // Otherwise (your own plan), use the single simulated run from the lookup.
+  // Otherwise (your own plan), use the single rehearsal run from the lookup.
   const option = night.options?.find((o) => o.extra_ambulances === amb && planKey(o.slots) === planKey(slots));
   const nothing = night.options?.find((o) => o.id === "nothing");
   const result = amb === 0 ? resultFor(night, slots) : null;
@@ -75,7 +76,7 @@ function SheetBody({ data }: { data: Scenarios }) {
   const after = option ? option.late : (result?.late_ids.length ?? null);
   const fmt = (n: number) => (option ? n.toFixed(1) : String(n));
   const shiftCost = data.costs.nurse_shift_usd;
-  const ambCost = data.costs.ambulance_night_usd;
+  const ambCost = perAmbulanceCost(data.costs);
   const total = option ? option.cost_usd : slots.length * shiftCost + amb * ambCost;
 
   return (
@@ -153,7 +154,7 @@ function SheetBody({ data }: { data: Scenarios }) {
       </div>
 
       <p className={css.fine}>
-        {option && "Effects are averages over simulated runs. "}The expected effect comes from a simulation (SIM) of this night, calibrated to real NYC 911 data (median response{" "}
+        {option && "Effects are averages over rehearsal runs. "}The expected effect comes from a rehearsal (SIM) of this night on real NYC 911 calls, checked against real data (median response{" "}
         {night.real.median_response_min} min, median time at hospital {night.real.median_time_at_hospital_min} min{" "}
         <Badge kind="real" />
         ). It is a planning estimate, not a guarantee. Hospitals are shown as A, B and C. Each call is assumed to go to its

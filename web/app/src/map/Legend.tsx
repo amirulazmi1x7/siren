@@ -20,7 +20,7 @@ export function Legend() {
         <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true">
           <rect x="1" y="1" width="15" height="10" rx="2" fill="var(--amb)" stroke="var(--amb-edge)" />
         </svg>
-        Ambulance waiting at the ER door
+        Ambulance at the ER door (still holding its patient)
       </span>
       <span>
         <i className={css.bar} aria-hidden="true" />

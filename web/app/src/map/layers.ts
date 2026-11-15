@@ -5,8 +5,8 @@ import type { Call } from "../lib/contract";
 import { prefersReducedMotion } from "../lib/motion";
 
 type RGB = [number, number, number];
-const OK: RGB = [31, 127, 85]; // --ok
-const LATE: RGB = [196, 43, 34]; // --late
+const OK: RGB = [26, 106, 66]; // --ok
+const LATE: RGB = [180, 35, 24]; // --late
 
 /** How long (sim minutes) a new call keeps pulsing during replay. */
 export const PULSE_MIN = 18;

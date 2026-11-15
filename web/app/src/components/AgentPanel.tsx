@@ -3,7 +3,8 @@ import { planKey } from "../lib/contract";
 import { money } from "../lib/format";
 import { mostJammedHospital } from "../lib/plan";
 import { budgetSteps, optionById, pickHeadline, shiftRuns } from "../lib/recommend";
-import { blockLabel, blockRangeLabel } from "../lib/time";
+import { fewerLate as fewerLateOf, severityLabel, storyFor } from "../lib/story";
+import { blockLabel, blockRangeLabel, clockLabel } from "../lib/time";
 import { prefersReducedMotion } from "../lib/motion";
 import { usePlanner } from "../state/PlannerContext";
 import { AgentChat } from "./AgentChat";
@@ -27,7 +28,7 @@ function nightDate(label: string): string {
 export function AgentPanel() {
   const { state } = usePlanner();
   return (
-    <section className={css.panel} aria-label="Planning agent" aria-live="polite">
+    <section className={`glass ${css.panel}`} aria-label="Planning agent" aria-live="polite">
       {state.phase === "brief" && <Brief />}
       {state.phase === "working" && <Working />}
       {state.phase === "decision" && <Decision />}
@@ -63,9 +64,6 @@ function Brief() {
   const hours = r.hours_at_hospital ?? data.area_real?.ambulance_hours_per_friday;
   return (
     <div className={css.brief}>
-      <p className={css.when}>
-        {nightDate(night.label)} · {data.city.area}, {data.city.name}
-      </p>
       {r.urgent_late !== undefined && r.urgent_calls ? (
         <h1 className={css.statement}>
           <span className={css.hit}>{r.urgent_late}</span> of {r.urgent_calls} urgent patients waited over 10 minutes
@@ -92,7 +90,7 @@ function Brief() {
         Plan this night
       </button>
       <p className={css.fine}>
-        The agent replays this night on a digital twin of the three ERs and tests thousands of fixes before it
+        The agent rehearses this night on a replay of real 911 calls and tests thousands of fixes before it
         recommends one.
       </p>
     </div>
@@ -112,7 +110,7 @@ function Working() {
   const steps = [
     `Reading ${night.calls.length} real 911 calls from this night`,
     `Bottleneck found: Hospital ${jam.id}, ${blockLabel(Math.max(0, worst))}`,
-    `Testing ${nPlans.toLocaleString("en-US")} nurse schedules, extra ambulances and mixes`,
+    `Rehearsing ${nPlans.toLocaleString("en-US")} nurse schedules, extra ambulances and mixes`,
     nOptions ? `Ranking ${nOptions} fixes for ${money(state.recBudget)}` : "Ranking the fixes",
   ];
 
@@ -144,7 +142,6 @@ function Working() {
 function Decision() {
   const { state, dispatch, derived } = usePlanner();
   const { night, pick } = derived;
-  const nothing = optionById(night, "nothing");
 
   if (!pick) {
     return (
@@ -157,8 +154,8 @@ function Decision() {
     );
   }
 
-  const fewerLate = nothing ? Math.max(0, nothing.late - pick.late) : null;
-  const minutes = pick.urgent_minutes_saved ?? null;
+  const fewer = fewerLateOf(night, pick);
+  const story = storyFor(night, pick);
   const runs = shiftRuns(pick.slots);
   const amb1 = optionById(night, "amb1");
 
@@ -175,31 +172,54 @@ function Decision() {
       </p>
       <h2 className={css.pick}>{pickHeadline(pick)}</h2>
       <ul className={css.shifts}>
-        {pick.extra_ambulances > 0 && <li>+{pick.extra_ambulances} ambulance for the whole night</li>}
+        {pick.extra_ambulances > 0 && (
+          <li className={`tile ${css.shiftRow}`}>
+            <span className={`${css.letter} ${css.ambLetter}`} aria-hidden="true">+</span>
+            <span className={css.shiftTime}>Extra ambulance, whole night</span>
+            <span className={css.shiftCount}>×{pick.extra_ambulances}</span>
+          </li>
+        )}
         {runs.map((r) => (
-          <li key={`${r.hospital}-${r.startBlock}`}>
-            <b>Hospital {r.hospital}</b> <span>{blockRangeLabel(r.startBlock, r.endBlock)}</span>
+          <li key={`${r.hospital}-${r.startBlock}`} className={`tile ${css.shiftRow}`}>
+            <span className={css.letter} aria-label={`Hospital ${r.hospital}`}>
+              {r.hospital}
+            </span>
+            <span className={css.shiftTime}>{blockRangeLabel(r.startBlock, r.endBlock)}</span>
+            <span className={css.shiftCount} title="offload nurse shifts">
+              ×{r.endBlock - r.startBlock + 1}
+            </span>
           </li>
         ))}
       </ul>
 
-      {minutes !== null && minutes >= 1 && (
-        <p className={css.human}>
-          <b className="num">
-            <AnimatedNumber value={minutes} format={(n) => n.toFixed(0)} /> minutes
-          </b>{" "}
-          sooner help for urgent patients tonight
-          {fewerLate !== null && fewerLate >= 0.5 && <>, about {fewerLate.toFixed(0)} fewer waiting over 10 minutes</>}.
-        </p>
+      {/* The one-person card: the emotional beat. People count is a rehearsal average; the story call is real. */}
+      {fewer !== null && fewer >= 1 && (
+        <div className={`tile ${css.story}`} data-testid="story">
+          <p className={css.human}>
+            <b className="num">
+              <AnimatedNumber value={fewer} />
+            </b>{" "}
+            more {fewer === 1 ? "person" : "people"} reached in time tonight. <Badge kind="sim" />
+          </p>
+          <p className={css.storyNote}>
+            Urgent calls: heart, breathing and stroke emergencies, and other life-threatening calls.
+          </p>
+          {story && (
+            <p className={css.storyCall} data-testid="story-call">
+              <b>One of them:</b> {clockLabel(story.highlight.t)}, {severityLabel(story.highlight.severity)} near
+              Hospital {story.highlight.hosp}. No fix: the ambulance arrives in{" "}
+              <b className={`num ${css.before}`}>{story.highlight.before_min} min</b>. With the plan:{" "}
+              <b className={`num ${css.after}`}>{story.highlight.after_min} min</b>. <Badge kind="sim" />
+            </p>
+          )}
+          <p className={css.storyNote}>In cardiac arrest, every minute without help lowers the chance of survival by about 8%.</p>
+        </div>
       )}
       <p className={css.result}>
         <b className="num">
           <AnimatedNumber value={pick.hours_back} format={(n) => n.toFixed(0)} /> ambulance-hours
         </b>{" "}
         back on the road for {money(pick.cost_usd)} (est.).
-      </p>
-      <p className={css.why}>
-        For cardiac arrest, each minute of delay cuts the odds of survival by about 8% (published research).
       </p>
       {amb1 && pick.extra_ambulances === 0 && (
         <p className={css.why}>

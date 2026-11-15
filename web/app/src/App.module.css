@@ -1,29 +1,11 @@
-/* App shell: a thin top bar, then the map as a full-bleed stage with the agent and controls over it. */
+/* Map-first: the map is the background; title, panels and the replay pill float over it as glass. */
 .shell {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.fake {
-  margin: 0 20px 8px;
-  padding: 5px 12px;
-  border-radius: 8px;
-  background: var(--warn-bg);
-  color: var(--warn-ink);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.stage {
-  --rail: min(460px, 38vw);
-  --gap: 18px;
   position: relative;
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   overflow: hidden;
-  border-top: 1px solid var(--line);
+  background: var(--bg);
 }
+
 .map {
   position: absolute;
   inset: 0;
@@ -33,39 +15,77 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgb(238 241 244 / 0.42);
+  background: rgb(228 232 236 / 0.45);
   pointer-events: none;
   transition: opacity 700ms var(--ease-out);
   opacity: 0;
 }
 .shell[data-phase="brief"] .map::after { opacity: 1; }
 
-.rail {
-  position: absolute;
-  z-index: 4;
-  top: var(--gap);
-  left: var(--gap);
-  bottom: var(--gap);
-  width: var(--rail);
+/* Overlay: clicks pass through to the map except on the panels themselves. */
+.overlay {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  gap: 16px;
   pointer-events: none;
 }
-.rail > * { pointer-events: auto; }
 
-.dock {
-  position: absolute;
-  z-index: 3;
-  left: calc(var(--rail) + 2 * var(--gap));
-  right: var(--gap);
-  bottom: var(--gap);
-  display: grid;
+.middle {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.left,
+.right {
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.left { width: 400px; max-width: 46vw; }
+.left > *,
+.right > * { pointer-events: auto; }
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
-  padding: 12px 14px 10px;
-  background: rgb(255 255 255 / 0.96);
-  border-radius: 14px;
-  box-shadow: 0 8px 28px -10px rgb(16 24 40 / 0.3);
+}
+.bottom > * { pointer-events: auto; }
+.legend {
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+/* Small footnote explaining the core idea; sits under the legend, quiet but readable. */
+.ps {
+  max-width: 820px;
+  margin: 0;
+  padding: 0 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--muted);
+  text-shadow: 0 0 6px rgb(255 255 255 / 0.95), 0 0 2px #fff;
+}
+.ps b { color: var(--ink); font-weight: 600; }
+
+.fake {
+  align-self: center;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: auto;
 }
 
 .status {
@@ -73,10 +93,11 @@
   font-size: 18px;
 }
 
-/* Narrow windows: stack, let the page scroll. Not a target (projector/laptop), just not broken. */
+/* Narrow windows: stack and let the page scroll. Not a target (projector/laptop), just not broken. */
 @media (max-width: 960px) {
-  .shell { height: auto; }
-  .stage { overflow: visible; display: grid; }
-  .map { position: relative; height: 62vh; }
-  .rail, .dock { position: static; width: auto; margin: 12px; }
+  .shell { height: auto; overflow: visible; }
+  .map { position: relative; height: 60vh; }
+  .overlay { height: auto; }
+  .middle { flex-direction: column; }
+  .left { width: 100%; max-width: none; }
 }

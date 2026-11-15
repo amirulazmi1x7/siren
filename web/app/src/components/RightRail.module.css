@@ -1,0 +1,87 @@
+.rail {
+  width: 300px;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for the glass shadows inside the scroll box. */
+  padding: 2px 4px 12px;
+  margin: -2px -4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: railIn 450ms var(--ease-out) both;
+}
+@keyframes railIn {
+  from { opacity: 0; transform: translateX(12px); }
+}
+
+.card {
+  flex: none;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Late count */
+.lateRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.late {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--late);
+}
+.lateLabel { font-size: 14px; font-weight: 500; }
+.sub { font-size: 12px; color: var(--muted); }
+.sub b { color: var(--ink); }
+
+/* Budget */
+.budgetHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.budgetLabel { font-size: 13px; font-weight: 500; }
+.est { color: var(--muted); font-weight: 400; }
+.budgetValue { font-size: 17px; font-weight: 600; }
+.range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* Compared */
+.compared {
+  padding: 12px;
+  gap: 4px;
+}
+.comparedHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  transition: opacity 250ms, background 250ms;
+}
+.chosen {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.name { flex: 1; min-width: 0; }
+.cost { color: var(--muted); }
+.hours { min-width: 48px; text-align: right; font-weight: 600; }
+.foot { padding: 4px 6px 0; font-size: 11px; color: var(--muted); }

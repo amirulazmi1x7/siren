@@ -20,7 +20,7 @@ export function OptionsCard() {
         How it decided <Badge kind="sim" />
       </h2>
       <p className="muted small">
-        On a digital twin of these 3 ERs, it tested {nPlans.toLocaleString("en-US")} nurse schedules plus extra
+        Rehearsing this night on real 911 calls at these 3 ERs, it tested {nPlans.toLocaleString("en-US")} nurse schedules plus extra
         ambulances and mixes, then picked the option that frees the most ambulance-hours within {money(state.recBudget)}.
       </p>
 
@@ -70,7 +70,7 @@ export function OptionsCard() {
       </div>
       <p className={css.foot}>
         Hours back = fewer hours stuck at hospitals, plus 12 hours per extra ambulance. Late = urgent patients reached
-        after 10 min. Averages over simulated runs. Costs are estimates.
+        after 10 min. Averages over rehearsal runs. Costs are estimates.
       </p>
     </section>
   );

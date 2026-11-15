@@ -1,33 +1,52 @@
 /* Design tokens. Light theme only: the page is shown on projectors. */
 :root {
   color-scheme: light;
-  --bg: #eef1f4;
+  /* Map-first, liquid glass palette (see CLAUDE.md "UI design"). */
+  --bg: #e4e8ec;
   --card: #ffffff;
-  --ink: #111827;
-  --muted: #4b5563;
-  --line: #dde2e8;
-  --ok: #1f7f55;
-  --late: #c42b22;
-  --amb: #d98a12;
-  --amb-edge: #5a3a00;
-  --accent: #2450c4;
-  --accent-soft: #e3e9fa;
-  /* One accent: the agent's blue. Green and red only mean reached in time / waited too long. */
-  --ai: #2450c4;
-  --ai-soft: #e3e9fa;
-  --rec: #2450c4;
-  --rec-soft: #e3e9fa;
-  --real: #4b5563;
-  --sim: #4b5563;
+  /* Airbnb-style text colors: near-black, warm gray secondary (slightly darker than #6A6A6A for projectors). */
+  --ink: #222222;
+  --muted: #5e5e5e;
+  --line: rgb(17 20 24 / 0.12);
+  --ok: #1a6a42;
+  --late: #b42318;
+  --warn: #c2680f;
+  --amb: #c98a2e;
+  --amb-edge: #6b4710;
+  /* Ambulance-red theme (UI only; the map stays grey). */
+  --accent: #b3122e;
+  --accent-2: #8e0f24;
+  --red: #d21f3c;
+  --coral: #f0605d;
+  --accent-soft: rgb(255 228 228 / 0.85);
+  --grad-primary: linear-gradient(135deg, #f0605d 0%, #d21f3c 50%, #8e0f24 100%);
+  /* The agent uses the theme crimson. Late stays brick red (--late) and is always paired with a triangle shape. */
+  --ai: #b3122e;
+  --ai-soft: rgb(255 228 228 / 0.85);
+  --rec: #b3122e;
+  --rec-soft: rgb(255 228 228 / 0.85);
+  --real: #5e5e5e;
+  --sim: #5e5e5e;
   --warn-bg: #fff3cd;
   --warn-ink: #5c4300;
   --error-bg: #fde8e6;
   --error-ink: #7a1d17;
 
-  --radius: 14px;
-  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Glass panel */
+  --glass-bg: rgb(255 255 255 / 0.42);
+  --glass-border: rgb(255 255 255 / 0.65);
+  --glass-blur: blur(16px) saturate(1.3);
+  --glass-shadow: inset 0 1px 1px rgb(255 255 255 / 0.9), 0 14px 34px -16px rgb(0 40 90 / 0.35),
+    0 2px 6px rgb(0 40 90 / 0.08);
+  --tile-bg: rgb(255 255 255 / 0.45);
+  --tile-border: rgb(255 255 255 / 0.7);
+
+  --radius: 20px;
+  /* Figtree: a free, warm geometric sans close to Airbnb Cereal (which is proprietary). */
+  --font: Figtree, system-ui, -apple-system, "Segoe UI", sans-serif;
   accent-color: var(--accent);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spring: cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
 * { box-sizing: border-box; }

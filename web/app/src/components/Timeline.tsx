@@ -55,66 +55,60 @@ export function Timeline() {
   };
 
   return (
-    <div className={css.wrap}>
+    <div className={`glass ${css.pill}`}>
       <button
         type="button"
-        className={`btn primary ${css.play}`}
+        className={css.play}
         onClick={() => dispatch({ type: "togglePlay" })}
         aria-label={state.playing ? "Pause replay" : "Play the night"}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true">
           {state.playing ? (
             <path d="M3 2h3v10H3zM8 2h3v10H8z" fill="currentColor" />
           ) : (
-            <path d="M3 1.5v11l9.5-5.5z" fill="currentColor" />
+            <path d="M3.5 1.5v11l9-5.5z" fill="currentColor" />
           )}
         </svg>
-        {state.playing ? "Pause" : "Replay night"}
       </button>
 
-      <div className={css.body}>
-        <div
-          ref={track}
-          className={css.track}
-          role="slider"
-          tabIndex={0}
-          aria-label="Time of night"
-          aria-valuemin={0}
-          aria-valuemax={NIGHT_MIN}
-          aria-valuenow={Math.round(state.t)}
-          aria-valuetext={clockLabel(state.t)}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onKeyDown={onKeyDown}
-          data-testid="timeline"
-        >
-          {/* Calls per 15 minutes; bins after the playhead are dimmed. */}
-          <div className={css.bars} aria-hidden="true">
-            {bins.map((n, i) => (
-              <span
-                key={i}
-                className={`${css.bar} ${(i + 1) * BIN_MIN <= state.t ? css.played : ""}`}
-                style={{ height: `${(n / maxBin) * 100}%` }}
-              />
-            ))}
-          </div>
-          {/* Late calls: small triangles (shape, not just color). */}
-          <div className={css.ticks} aria-hidden="true">
-            {lateTimes.map((t, i) => (
-              <span key={i} className={`${css.tick} ${t <= state.t ? css.tickOn : ""}`} style={{ left: pct(t) }} />
-            ))}
-          </div>
-          {/* Block dividers + labels. */}
-          <div className={css.blocks} aria-hidden="true">
-            {data.blocks.map((b) => (
-              <span key={b} className={css.block}>
-                {b}
-              </span>
-            ))}
-          </div>
-          <div className={css.head} style={{ left: pct(state.t) }} aria-hidden="true" />
+      <div
+        ref={track}
+        className={css.track}
+        role="slider"
+        tabIndex={0}
+        aria-label="Time of night"
+        aria-valuemin={0}
+        aria-valuemax={NIGHT_MIN}
+        aria-valuenow={Math.round(state.t)}
+        aria-valuetext={clockLabel(state.t)}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onKeyDown={onKeyDown}
+        data-testid="timeline"
+        title={data.blocks.join(" · ")}
+      >
+        {/* Calls per 15 minutes (REAL); bins already played are darker. */}
+        <div className={css.bars} aria-hidden="true">
+          {bins.map((n, i) => (
+            <span
+              key={i}
+              className={`${css.bar} ${(i + 1) * BIN_MIN <= state.t ? css.played : ""}`}
+              style={{ height: `${(n / maxBin) * 100}%` }}
+            />
+          ))}
         </div>
+        {/* Late calls: small triangles (shape, not just color). */}
+        <div className={css.ticks} aria-hidden="true">
+          {lateTimes.map((t, i) => (
+            <span key={i} className={`${css.tick} ${t <= state.t ? css.tickOn : ""}`} style={{ left: pct(t) }} />
+          ))}
+        </div>
+        <div className={css.head} style={{ left: pct(state.t) }} aria-hidden="true" />
       </div>
+
+      <span className={`num ${css.clock}`} data-testid="clock">
+        {clockLabel(state.t)}
+      </span>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export interface PlanResult {
   hours_at_hospital?: number;
 }
 
-/** One fix the planner compared (real export only). Numbers are averages over simulated runs (SIM). */
+/** One fix the planner compared (real export only). Numbers are averages over rehearsal runs (SIM). */
 export interface PlanOption {
   id: string;
   label: string;
@@ -52,6 +52,23 @@ export interface PlanOption {
   urgent_minutes_saved?: number;
   /** Estimated extra cardiac-arrest survivors if run every Friday for a year (SIM, noisy at this scale). */
   arrest_survivors_per_year?: number;
+  /**
+   * One real urgent call this plan helps, from rehearsal run 0 (the run the map replays).
+   * Time, type and area are real; before/after minutes are rehearsal results (SIM). Null if none.
+   */
+  highlight?: StoryCall | null;
+}
+
+export interface StoryCall {
+  /** Call id in night.calls. */
+  id: number;
+  /** Minutes since 6 PM. */
+  t: number;
+  /** NYC EMS initial severity code (1 most severe). */
+  severity: number;
+  hosp: HospitalId;
+  before_min: number;
+  after_min: number;
 }
 
 export interface AiPlan extends PlanResult {
@@ -99,7 +116,13 @@ export interface Scenarios {
   city: { name: string; area: string };
   blocks: string[];
   hospitals: Hospital[];
-  costs: { nurse_shift_usd: number; ambulance_night_usd: number };
+  costs: {
+    nurse_shift_usd: number;
+    /** Older exports: per ambulance. Newer exports: +2 ambulances; use ambulance_each_night_usd for one. */
+    ambulance_night_usd: number;
+    /** One extra ambulance for one night (newer exports). */
+    ambulance_each_night_usd?: number;
+  };
   nights: Partial<Record<NightName, Night>>;
   /** Area-wide measured numbers (REAL), real export only. */
   area_real?: {
