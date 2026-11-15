@@ -48,6 +48,10 @@ export interface PlanOption {
   hours_at_hospital: number;
   /** Mean urgent patients reached late. */
   late: number;
+  /** Total minutes of faster ambulance arrival for urgent patients vs doing nothing (SIM). */
+  urgent_minutes_saved?: number;
+  /** Estimated extra cardiac-arrest survivors if run every Friday for a year (SIM, noisy at this scale). */
+  arrest_survivors_per_year?: number;
 }
 
 export interface AiPlan extends PlanResult {
@@ -57,6 +61,11 @@ export interface AiPlan extends PlanResult {
 export interface RealStats {
   median_response_min: number;
   median_time_at_hospital_min: number;
+  /** Measured that night (real export only): urgent calls with a valid response time, how many waited over 10 min. */
+  urgent_calls?: number;
+  urgent_late?: number;
+  /** Measured ambulance-hours at hospitals that night (arrival to back in service). */
+  hours_at_hospital?: number;
 }
 
 export interface Night {

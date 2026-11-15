@@ -20,7 +20,11 @@ import { NIGHT_MIN, blockOf } from "../lib/time";
 export const REPLAY_SECONDS = 24;
 const MIN_PER_MS = NIGHT_MIN / (REPLAY_SECONDS * 1000);
 
+/** The agent flow: the brief (problem + goal), the agent working, then its decision. */
+export type Phase = "brief" | "working" | "decision";
+
 export interface PlannerState {
+  phase: Phase;
   nightName: NightName;
   /** Your slots, in the order they were placed (lowering the budget drops the newest). */
   slots: Slot[];
@@ -36,6 +40,9 @@ export interface PlannerState {
 }
 
 export type PlannerAction =
+  | { type: "plan" }
+  | { type: "decide" }
+  | { type: "rebrief" }
   | { type: "setNight"; name: NightName }
   | { type: "toggleSlot"; slot: Slot }
   | { type: "setBudget"; budget: number }
@@ -59,12 +66,13 @@ export function initialState(data: Scenarios, name: NightName = "typical"): Plan
   const nightName = data.nights[name] ? name : (Object.keys(data.nights)[0] as NightName);
   const night = nightOf(data, nightName);
   return {
+    phase: "brief",
     nightName,
     slots: [],
     budget: bestValue(night).k,
     recBudget: defaultBudget(night),
-    // Lead with the planner's pick when the data has one.
-    view: hasPlanner(night) ? "rec" : "yours",
+    // The brief shows the night as it happened, with no fix.
+    view: "nothing",
     t: NIGHT_MIN,
     playing: false,
     msg: "",
@@ -73,10 +81,19 @@ export function initialState(data: Scenarios, name: NightName = "typical"): Plan
 
 export function plannerReducer(state: PlannerState, action: PlannerAction, data: Scenarios): PlannerState {
   switch (action.type) {
+    case "plan":
+      // The agent starts working: replay the night with no fix while it plans.
+      return { ...state, phase: "working", view: "nothing", t: 0, playing: true, msg: "" };
+    case "decide": {
+      const night = nightOf(data, state.nightName);
+      return { ...state, phase: "decision", view: hasPlanner(night) ? "rec" : "ai", t: 0, playing: true, msg: "" };
+    }
+    case "rebrief":
+      return { ...state, phase: "brief", view: "nothing", t: NIGHT_MIN, playing: false, msg: "" };
     case "setNight": {
       if (!data.nights[action.name]) return state;
-      // New night: fresh plan, best-value budget, keep replay time.
-      return { ...initialState(data, action.name), t: state.t, playing: state.playing };
+      // New night: back to the brief, keeping the chosen budget.
+      return { ...initialState(data, action.name), recBudget: state.recBudget };
     }
     case "toggleSlot": {
       const r = toggleSlot(state.slots, action.slot, state.budget);

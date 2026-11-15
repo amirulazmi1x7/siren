@@ -5,8 +5,12 @@
 }
 .play {
   align-self: center;
-  min-width: 132px;
+  min-width: 150px;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .body {
@@ -36,11 +40,11 @@
 .bar {
   flex: 1;
   min-height: 1px;
-  background: #c9c6bc;
+  background: #cfd5dd;
   border-radius: 2px 2px 0 0;
   transition: background 200ms;
 }
-.played { background: #8f948f; }
+.played { background: #8a94a3; }
 
 .ticks {
   position: absolute;

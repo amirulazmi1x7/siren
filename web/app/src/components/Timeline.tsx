@@ -62,7 +62,14 @@ export function Timeline() {
         onClick={() => dispatch({ type: "togglePlay" })}
         aria-label={state.playing ? "Pause replay" : "Play the night"}
       >
-        {state.playing ? "❚❚ Pause" : "▶ Play night"}
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          {state.playing ? (
+            <path d="M3 2h3v10H3zM8 2h3v10H8z" fill="currentColor" />
+          ) : (
+            <path d="M3 1.5v11l9.5-5.5z" fill="currentColor" />
+          )}
+        </svg>
+        {state.playing ? "Pause" : "Replay night"}
       </button>
 
       <div className={css.body}>

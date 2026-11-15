@@ -16,13 +16,39 @@ const data = scenarios();
 const run = (s: PlannerState, ...actions: PlannerAction[]) => actions.reduce((acc, a) => plannerReducer(acc, a, data), s);
 
 describe("initial state", () => {
-  it("starts on typical, full night shown, best-value budget, planner's pick when available", () => {
+  it("starts on the brief: typical night, full night of doing nothing, best-value budget", () => {
     const s = initialState(data);
     expect(s.nightName).toBe("typical");
+    expect(s.phase).toBe("brief");
     expect(s.t).toBe(NIGHT_MIN);
     expect(s.playing).toBe(false);
-    expect(s.view).toBe(hasPlanner(night("typical")) ? "rec" : "yours");
+    expect(s.view).toBe("nothing");
     expect(s.budget).toBe(bestValue(night("typical")).k);
+  });
+});
+
+describe("agent flow", () => {
+  it("plan replays doing nothing from 6 PM while the agent works", () => {
+    const s = run(initialState(data), { type: "plan" });
+    expect(s.phase).toBe("working");
+    expect(s.view).toBe("nothing");
+    expect(s.t).toBe(0);
+    expect(s.playing).toBe(true);
+  });
+
+  it("decide shows the planner's pick (or your plan without planner data) and replays it", () => {
+    const s = run(initialState(data), { type: "plan" }, { type: "tick", dtMs: 2000 }, { type: "decide" });
+    expect(s.phase).toBe("decision");
+    expect(s.view).toBe(hasPlanner(night("typical")) ? "rec" : "ai");
+    expect(s.t).toBe(0);
+    expect(s.playing).toBe(true);
+  });
+
+  it("changing the night or the brief button goes back to the brief", () => {
+    const decided = run(initialState(data), { type: "plan" }, { type: "decide" });
+    expect(run(decided, { type: "setNight", name: "holiday" }).phase).toBe("brief");
+    expect(run(decided, { type: "rebrief" }).phase).toBe("brief");
+    expect(run(decided, { type: "rebrief" }).view).toBe("nothing");
   });
 });
 

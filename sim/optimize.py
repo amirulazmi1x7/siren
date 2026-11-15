@@ -11,6 +11,7 @@ import statistics
 
 from shared.contract import MAX_LOOKUP_SHIFTS, plan_key
 from sim.model import HOSP_IDS, N_BLOCKS, NightResult, SimParams, run_night
+from sim.outcomes import ARREST_SEVERITY, arrest_survival
 
 
 def all_slots() -> list[str]:
@@ -29,8 +30,14 @@ def hours_at_hospital(r: NightResult) -> float:
 def evaluate(calls: list[dict], params: SimParams, slots: frozenset[str] = frozenset(),
              seeds=range(5), extra_ambulances: int = 0) -> dict:
     runs = [run_night(calls, params, slots, extra_ambulances, seed=s) for s in seeds]
+    urgent = [c["id"] for c in calls if c["severity"] <= params.urgent_max_severity]
+    arrests = [c["id"] for c in calls if c["severity"] == ARREST_SEVERITY]
     return {"hours_at_hospital": round(statistics.mean(hours_at_hospital(r) for r in runs), 2),
-            "late": round(statistics.mean(len(r.late_ids) for r in runs), 2)}
+            "late": round(statistics.mean(len(r.late_ids) for r in runs), 2),
+            # Total minutes urgent patients waited for an ambulance, and expected cardiac-arrest survivors.
+            "urgent_response_min": round(statistics.mean(sum(r.response_min[i] for i in urgent) for r in runs), 1),
+            "arrest_survivors": round(statistics.mean(sum(arrest_survival(r.response_min[i]) for i in arrests)
+                                                      for r in runs), 5)}
 
 
 def score(calls: list[dict], params: SimParams, slots: frozenset[str], seeds=range(5)) -> tuple[float, float]:

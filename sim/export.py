@@ -18,6 +18,7 @@ from pathlib import Path
 from pipeline.config import AMB_EACH_NIGHT_USD, AMB_NIGHT_USD, BLOCKS, CITY, HOSPITALS, NURSE_SHIFT_USD
 from shared.contract import MAX_LOOKUP_SHIFTS, validate_scenarios
 from sim.model import NightResult, SimParams, run_night
+from sim.outcomes import pick_highlight
 from sim.optimize import all_plan_keys, evaluate, greedy_plans, hours_at_hospital
 
 NIGHT_HOURS = 12
@@ -33,27 +34,40 @@ def result_to_json(r: NightResult) -> dict:
             "hours_at_hospital": round(hours_at_hospital(r), 1)}
 
 
-def _option(oid, label, slots, extra, e, base_hours) -> dict:
+FRIDAYS_PER_YEAR = 52
+
+
+def _option(oid, label, slots, extra, e, base) -> dict:
+    base_hours = base["hours_at_hospital"]
     return {"id": oid, "label": label, "slots": slots, "extra_ambulances": extra,
             "cost_usd": len(slots) * NURSE_SHIFT_USD + extra * AMB_EACH_NIGHT_USD,
             "hours_back": round(base_hours - e["hours_at_hospital"] + extra * NIGHT_HOURS, 1),
-            "hours_at_hospital": e["hours_at_hospital"], "late": e["late"]}
+            "hours_at_hospital": e["hours_at_hospital"], "late": e["late"],
+            # Why care beyond budget (SIM): faster help for urgent patients, and an estimate of cardiac-arrest
+            # survivors gained if this plan ran every Friday night for a year (sim/outcomes.py).
+            "urgent_minutes_saved": round(base["urgent_response_min"] - e["urgent_response_min"], 1),
+            "arrest_survivors_per_year": round(FRIDAYS_PER_YEAR * (e["arrest_survivors"] - base["arrest_survivors"]), 2)}
 
 
 def build_options(calls, params, plans: dict[int, list[str]], seeds) -> list[dict]:
     base = evaluate(calls, params, seeds=seeds)
-    h0 = base["hours_at_hospital"]
-    opts = [_option("nothing", "Do nothing", [], 0, base, h0)]
+    opts = [_option("nothing", "Do nothing", [], 0, base, base)]
     for m in (1, 2):
         opts.append(_option(f"amb{m}", f"+{m} ambulance{'s' if m > 1 else ''}", [], m,
-                            evaluate(calls, params, seeds=seeds, extra_ambulances=m), h0))
+                            evaluate(calls, params, seeds=seeds, extra_ambulances=m), base))
     for k, slots in plans.items():
         opts.append(_option(f"nurses{k}", f"{k} nurse shift{'s' if k > 1 else ''}", slots, 0,
-                            evaluate(calls, params, frozenset(slots), seeds), h0))
+                            evaluate(calls, params, frozenset(slots), seeds), base))
     for k in range(1, 5):
         slots = plans[k]
         opts.append(_option(f"amb1_nurses{k}", f"+1 ambulance & {k} nurse shift{'s' if k > 1 else ''}", slots, 1,
-                            evaluate(calls, params, frozenset(slots), seeds, extra_ambulances=1), h0))
+                            evaluate(calls, params, frozenset(slots), seeds, extra_ambulances=1), base))
+    # One real call per option, from the same replay the map shows (seed 0): the person the plan helps most.
+    before = run_night(calls, params, seed=0).response_min
+    for o in opts:
+        after = before if o["id"] == "nothing" else run_night(
+            calls, params, frozenset(o["slots"]), o["extra_ambulances"], seed=0).response_min
+        o["highlight"] = pick_highlight(calls, before, after)
     return opts
 
 
@@ -116,12 +130,12 @@ def area_real_stats(df) -> dict:
 
 
 def main() -> None:
-    from pipeline.clean import load_all, night_calls, pick_nights, real_stats
+    from pipeline.clean import load_all, night_calls, night_real_stats, pick_nights
     from sim.calibrate import load_params
     df, params = load_all(), load_params()
     nights = {}
     for name, night in pick_nights(df).items():
-        nights[name] = (night_calls(df, night), real_stats(df[df["night"] == night]),
+        nights[name] = (night_calls(df, night), night_real_stats(df[df["night"] == night]),
                         f"{LABELS[name]} ({night.isoformat()})")
     d = build_scenarios(nights, params, area_real=area_real_stats(df))
     errors = validate_scenarios(d)

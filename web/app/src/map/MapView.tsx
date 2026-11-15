@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, {
   AttributionControl,
   Marker,
-  NavigationControl,
-  ScaleControl,
   type MapRef,
 } from "react-map-gl/maplibre";
 import type { HospitalId } from "../lib/contract";
@@ -17,7 +15,8 @@ import { callLayers, orderCalls } from "./layers";
 import { registerFocusHandler } from "./mapControl";
 import css from "./MapView.module.css";
 
-const FIT_PADDING = 56;
+/** Frame the study area in the part of the stage the panel and dock leave free. */
+const FIT_PADDING = { top: 70, bottom: 190, left: 520, right: 290 };
 const FLY_MS = 1200;
 const FOCUS_ZOOM = 14.5;
 const FOCUS_MS = 800;
@@ -32,14 +31,26 @@ export function MapView() {
   // Frame the night's calls and the hospitals, so the camera follows the real study area.
   const bounds = useMemo(() => boundsOf([...derived.night.calls, ...data.hospitals]), [derived.night, data.hospitals]);
 
+  // The map's box changes size with the window and layout; keep the canvas in step with it.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => mapRef.current?.getMap().resize());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const onLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+    map.resize();
+    map.fitBounds(bounds, { padding: FIT_PADDING, duration: 0 });
     hidePlaceLabels(map);
     map.on("styledata", () => hidePlaceLabels(map));
     // Dev only: lets QA scripts check rendered labels (e.g. no hospital names). Stripped from builds.
     if (import.meta.env.DEV) (window as unknown as { __map: typeof map }).__map = map;
-  }, []);
+  }, [bounds]);
 
   // Fly to the study area whenever the night changes (skip first render: initialViewState handles it).
   const firstFit = useRef(true);
@@ -76,7 +87,7 @@ export function MapView() {
   });
 
   return (
-    <div className={css.wrap} data-testid="map">
+    <div ref={wrapRef} className={css.wrap} data-testid="map">
       <Map
         ref={mapRef}
         mapStyle={ONLINE_STYLE_URL}
@@ -97,9 +108,7 @@ export function MapView() {
       >
         {/* interleaved: draw inside MapLibre's own WebGL context, so HTML markers and the legend stay on top. */}
         <DeckOverlay interleaved layers={layers} />
-        <NavigationControl position="top-right" showCompass={false} />
-        <ScaleControl position="bottom-right" unit="imperial" />
-        <AttributionControl position="bottom-right" compact />
+        <AttributionControl position="top-right" compact />
         {data.hospitals.map((h, i) => (
           <Marker key={h.id} longitude={h.lon} latitude={h.lat} anchor="top-left" offset={[-BADGE_HALF, -BADGE_HALF]}>
             <HospitalMarker

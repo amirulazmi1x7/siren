@@ -15,11 +15,18 @@ export function HowItWorks() {
           <Badge kind="real" />
         </li>
         <li>
-          <b>Digital twin.</b> A simulation of the area's ambulances and ER doors, checked against real nights.
+          <b>Simulation.</b> A replay of the area's ambulances and ER doors, built from real 911 calls and checked
+          against real nights.
         </li>
         <li>
-          <b>AI planner.</b> Tests thousands of fixes on the twin and picks the one that frees the most
+          <b>AI planner.</b> Tests thousands of fixes on the simulation and picks the one that frees the most
           ambulance-hours for the budget.
+        </li>
+        <li>
+          <b>Why it matters.</b> Freed ambulances reach urgent patients sooner; the panel shows those minutes. For
+          cardiac arrest, survival odds fall about 8% per minute of delay (Resuscitation Outcomes Consortium). In these
+          3 ERs there are only 2 to 4 arrest calls on a Friday night, so the estimated lives saved is under 1 a year and
+          too small to measure precisely. Across a whole city, every night, the minutes add up.
         </li>
       </ol>
     </section>
@@ -34,8 +41,7 @@ export function FixLibrary() {
         <li className={css.on}>Offload nurses at the ER door (modeled)</li>
         <li className={css.on}>Extra ambulances (modeled)</li>
         <li>Planned rerouting to the least busy ER, decided ahead of time (next)</li>
-        <li>Treat-and-release or telehealth for minor calls (next)</li>
-        <li>Hospital fast-track handover desk (next)</li>
+        <li>Treat-and-release or telehealth for minor calls (proposed)</li>
       </ul>
     </section>
   );

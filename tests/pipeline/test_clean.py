@@ -89,3 +89,13 @@ def test_summer_night_skips_any_holiday_week():
               date(2026, 3, 6): 240, date(2026, 3, 13): 238}
     df = pd.DataFrame({"night": [n for n, c in nights.items() for _ in range(c)]})
     assert pick_nights(df)["heat"] == date(2026, 8, 14)
+
+
+def test_night_real_stats_counts_late_urgent_and_hospital_hours():
+    from pipeline.clean import night_real_stats
+    df = pd.DataFrame({"response_min": [12.0, 8.0, 15.0, np.nan], "severity": [2, 3, 6, 1],
+                       "time_at_hosp_min": [60.0, 30.0, np.nan, 30.0]})
+    s = night_real_stats(df)
+    assert s["urgent_calls"] == 2 and s["urgent_late"] == 1          # sev 6 not urgent; NaN response skipped
+    assert s["hours_at_hospital"] == 2.0
+    assert s["median_response_min"] == 12.0

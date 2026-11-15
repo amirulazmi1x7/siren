@@ -1,23 +1,24 @@
 /* Design tokens. Light theme only: the page is shown on projectors. */
 :root {
   color-scheme: light;
-  --bg: #f3f2ed;
+  --bg: #eef1f4;
   --card: #ffffff;
-  --ink: #16181c;
-  --muted: #50545b;
-  --line: #d8d5cb;
+  --ink: #111827;
+  --muted: #4b5563;
+  --line: #dde2e8;
   --ok: #1f7f55;
   --late: #c42b22;
   --amb: #d98a12;
   --amb-edge: #5a3a00;
   --accent: #2450c4;
   --accent-soft: #e3e9fa;
-  --ai: #6a3fc4;
-  --ai-soft: #ece4fb;
-  --rec: #0e7a6e;
-  --rec-soft: #dff2ee;
-  --real: #1a6e49;
-  --sim: #6a3fc4;
+  /* One accent: the agent's blue. Green and red only mean reached in time / waited too long. */
+  --ai: #2450c4;
+  --ai-soft: #e3e9fa;
+  --rec: #2450c4;
+  --rec-soft: #e3e9fa;
+  --real: #4b5563;
+  --sim: #4b5563;
   --warn-bg: #fff3cd;
   --warn-ink: #5c4300;
   --error-bg: #fde8e6;
@@ -25,11 +26,13 @@
 
   --radius: 14px;
   --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  accent-color: var(--accent);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+::selection { background: var(--accent-soft); color: var(--ink); }
 body {
   margin: 0;
   background: var(--bg);

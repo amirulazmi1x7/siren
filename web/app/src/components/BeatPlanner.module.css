@@ -1,24 +1,4 @@
-.wrap {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-}
-.summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 18px;
-  font-size: 17px;
-  cursor: pointer;
-  list-style: none;
-}
-.summary::-webkit-details-marker { display: none; }
-.summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: var(--radius); }
-.chev { transition: transform 200ms; font-size: 18px; color: var(--muted); }
-.wrap[open] .chev { transform: rotate(180deg); }
 .body {
   display: grid;
-  gap: 14px;
-  padding: 0 12px 12px;
+  gap: 18px;
 }

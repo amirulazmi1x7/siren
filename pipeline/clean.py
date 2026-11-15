@@ -79,6 +79,14 @@ def real_stats(df: pd.DataFrame) -> dict:
             "median_time_at_hospital_min": round(float(np.nanmedian(df["time_at_hosp_min"])), 1)}
 
 
+def night_real_stats(df: pd.DataFrame) -> dict:
+    """real_stats plus measured counts for one night: urgent patients reached after 10 min, hospital hours."""
+    urgent = df[(df["severity"] <= 3) & df["response_min"].notna()]
+    return {**real_stats(df), "urgent_calls": int(len(urgent)),
+            "urgent_late": int((urgent["response_min"] > 10).sum()),
+            "hours_at_hospital": round(float(df["time_at_hosp_min"].sum()) / 60, 1)}
+
+
 def load_all(raw_path: str = "data/raw/fridays.parquet", seed: int = 0) -> pd.DataFrame:
     raw = pd.read_parquet(raw_path)
     cents = pd.read_csv(CITY["centroids_csv"], dtype={"zip": str})

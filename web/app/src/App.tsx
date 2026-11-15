@@ -1,10 +1,5 @@
-import { BeatPlanner } from "./components/BeatPlanner";
-import { Footer } from "./components/Footer";
-import { FixLibrary, HowItWorks } from "./components/HowItWorks";
+import { AgentPanel } from "./components/AgentPanel";
 import { MapHud } from "./components/MapHud";
-import { OptionsCard } from "./components/OptionsCard";
-import { ProblemStrip } from "./components/ProblemStrip";
-import { RecommendationCard } from "./components/RecommendationCard";
 import { Timeline } from "./components/Timeline";
 import { TopBar } from "./components/TopBar";
 import { useScenarios } from "./hooks/useScenarios";
@@ -30,34 +25,28 @@ export function App() {
 }
 
 function Shell() {
-  const { data } = usePlanner();
+  const { data, state } = usePlanner();
   return (
-    <div className={css.shell}>
+    <div className={css.shell} data-phase={state.phase}>
       <TopBar />
       {data.fake && (
         <div className={css.fake} role="note">
           FAKE DATA for building the page. Real numbers arrive with the pipeline export.
         </div>
       )}
-      <ProblemStrip />
-      <main className={css.main}>
-        {/* Decision first: the recommendation, how it was chosen, then the hands-on challenge. */}
-        <aside className={css.panel} aria-label="Planner">
-          <RecommendationCard />
-          <OptionsCard />
-          <HowItWorks />
-          <FixLibrary />
-          <BeatPlanner />
-          <Footer />
-        </aside>
-        <section className={css.mapCol} aria-label="Map of the night">
-          <div className={css.mapBox}>
-            <MapView />
-            <MapHud />
-          </div>
+      {/* The map is the stage; the agent speaks over it, the replay controls dock at the bottom. */}
+      <main className={css.stage}>
+        <div className={css.map} aria-label="Map of the night">
+          <MapView />
+        </div>
+        <div className={css.rail}>
+          <AgentPanel />
+        </div>
+        {state.phase !== "brief" && <MapHud />}
+        <div className={css.dock}>
           <Timeline />
           <Legend />
-        </section>
+        </div>
       </main>
     </div>
   );

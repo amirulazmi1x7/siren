@@ -43,3 +43,20 @@ def test_full_file_passes_the_contract():
     d = build_scenarios(nights, TIGHT, max_k=1, seeds=range(2))
     assert validate_scenarios(d) == []
     assert d["fake"] is False and "area_real" not in d or isinstance(d.get("area_real"), dict)
+
+
+def test_options_carry_minutes_saved_and_estimated_lives():
+    opts = {o["id"]: o for o in _night()["options"]}
+    assert opts["nothing"]["urgent_minutes_saved"] == 0 and opts["nothing"]["arrest_survivors_per_year"] == 0
+    assert all(isinstance(o["urgent_minutes_saved"], float | int) for o in opts.values())
+    assert opts["amb2"]["urgent_minutes_saved"] > 0       # more ambulances always reach urgent patients sooner
+
+
+def test_options_carry_a_story_call_from_the_replayed_night():
+    n = _night()
+    ids = {c["id"] for c in n["calls"]}
+    for o in n["options"]:
+        assert "highlight" in o
+        if o["highlight"]:
+            assert o["highlight"]["id"] in ids and o["highlight"]["after_min"] < o["highlight"]["before_min"]
+    assert next(o for o in n["options"] if o["id"] == "nothing")["highlight"] is None
