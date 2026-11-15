@@ -6,6 +6,7 @@ import { budgetSteps, optionById, pickHeadline, shiftRuns } from "../lib/recomme
 import { blockLabel, blockRangeLabel } from "../lib/time";
 import { prefersReducedMotion } from "../lib/motion";
 import { usePlanner } from "../state/PlannerContext";
+import { AgentChat } from "./AgentChat";
 import { AnimatedNumber } from "./AnimatedNumber";
 import { BeatPlanner } from "./BeatPlanner";
 import { Badge } from "./Badge";
@@ -216,6 +217,12 @@ function Decision() {
       </div>
 
       <div className={css.more}>
+        <details className={css.drawer} open>
+          <summary>Ask the agent a what-if</summary>
+          <div className={css.drawerBody}>
+            <AgentChat />
+          </div>
+        </details>
         <details className={css.drawer}>
           <summary>Why this plan?</summary>
           <div className={css.drawerBody}>

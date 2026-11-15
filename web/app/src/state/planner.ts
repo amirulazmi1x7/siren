@@ -43,6 +43,7 @@ export type PlannerAction =
   | { type: "plan" }
   | { type: "decide" }
   | { type: "rebrief" }
+  | { type: "loadPlan"; slots: Slot[] }
   | { type: "setNight"; name: NightName }
   | { type: "toggleSlot"; slot: Slot }
   | { type: "setBudget"; budget: number }
@@ -88,6 +89,10 @@ export function plannerReducer(state: PlannerState, action: PlannerAction, data:
       const night = nightOf(data, state.nightName);
       return { ...state, phase: "decision", view: hasPlanner(night) ? "rec" : "ai", t: 0, playing: true, msg: "" };
     }
+    case "loadPlan":
+      // A plan from the chat: show it on the map as "your plan" and replay the night.
+      return { ...state, view: "yours", slots: action.slots, budget: clampBudget(action.slots.length),
+               t: 0, playing: true, msg: "" };
     case "rebrief":
       return { ...state, phase: "brief", view: "nothing", t: NIGHT_MIN, playing: false, msg: "" };
     case "setNight": {

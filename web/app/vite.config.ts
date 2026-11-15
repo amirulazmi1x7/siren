@@ -9,7 +9,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   publicDir: resolve(__dirname, "../data"),
-  server: { port: 5173, strictPort: true },
+  // /api goes to the chat server (python -m chat.server) so the API key never reaches the browser.
+  server: { port: 5173, strictPort: true, proxy: { "/api": "http://127.0.0.1:8787" } },
   preview: { port: 4173, strictPort: true },
   build: {
     rollupOptions: {

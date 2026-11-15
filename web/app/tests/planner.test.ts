@@ -27,6 +27,17 @@ describe("initial state", () => {
   });
 });
 
+describe("chat plans", () => {
+  it("loadPlan shows a plan from the chat on the map as your plan", () => {
+    const s = run(initialState(data), { type: "loadPlan", slots: ["B-3", "B-2"] });
+    expect(s.view).toBe("yours");
+    expect(s.slots).toEqual(["B-3", "B-2"]);
+    expect(s.budget).toBe(2);
+    expect(s.t).toBe(0);
+    expect(s.playing).toBe(true);
+  });
+});
+
 describe("agent flow", () => {
   it("plan replays doing nothing from 6 PM while the agent works", () => {
     const s = run(initialState(data), { type: "plan" });
