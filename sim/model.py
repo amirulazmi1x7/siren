@@ -1,8 +1,10 @@
 """The digital twin: replay one Friday night (6 PM -> 6 AM) of 911 calls, ambulances, and ER doors.
 
 Plain-English model:
-  1. Each call arrives at its real time. After a short dispatch delay, the nearest free ambulance goes.
-     If none is free, the call waits (urgent calls, severity 1-3, go first).
+  1. Each call arrives at its real time. After a short dispatch delay, the nearest free local ambulance
+     goes. For URGENT calls, if none is free (often because they are stuck at ER doors), a unit from
+     outside the area comes instead, with a longer drive. Non-urgent calls are held until a local
+     ambulance is free. That is how stuck ambulances make responses slower in NYC.
   2. The crew spends time on scene. If the patient is transported, the crew drives to the call's ER.
   3. At the ER door the crew waits until the ER accepts the patient (limited handoffs at a time).
      That waiting is the "offload delay": the ambulance is stuck and cannot take new 911 calls.
@@ -39,6 +41,7 @@ class SimParams:
     nurse_handoff_min: float = 20.0
     nurse_patients: int = 4
     urgent_max_severity: int = 3
+    outside_travel_min: float = 14.0   # average drive time for a unit sent from outside the area (varies +/-50%)
 
 
 @dataclass
@@ -48,6 +51,8 @@ class NightResult:
     stuck: list[list[float]]           # 3x6 mean ambulances at the ER door
     door_wait_min: list[list[float]]   # 3x6 mean minutes a crew spent at the door, by arrival block
     time_at_hosp_min: list[float] = field(default_factory=list)
+    hosp_visits: list[tuple[str, int, float]] = field(default_factory=list)  # (ER, arrival block, minutes at hospital)
+    outside_responses: int = 0         # calls covered by a unit from outside the area
 
 
 def _km(a: tuple[float, float], b: tuple[float, float]) -> float:
@@ -69,12 +74,14 @@ def run_night(calls: list[dict], params: SimParams, slots: frozenset[str] = froz
     picks = [calls[rng.randrange(len(calls))] for _ in range(params.n_ambulances + 50)]
     starts = [(c["lat"], c["lon"]) for c in picks]
     handoff = {c["id"]: rng.expovariate(1 / params.handoff_mean_min) for c in calls}
+    outside_drive = {c["id"]: params.outside_travel_min * rng.uniform(0.5, 1.5) for c in calls}
 
     env = simpy.Environment()
     n_amb = params.n_ambulances + extra_ambulances
     pos = starts[:n_amb]
     free = set(range(n_amb))
-    waiting: list[tuple[int, float, dict]] = []         # (priority, ready time, call)
+    outside = [0]
+    held: deque = deque()                               # non-urgent calls waiting for a local ambulance
     door_queue = {h: deque() for h in HOSP_IDS}         # patients waiting for the ER to accept
     in_service = {h: 0 for h in HOSP_IDS}
     nurse_load = {h: 0 for h in HOSP_IDS}
@@ -83,6 +90,7 @@ def run_night(calls: list[dict], params: SimParams, slots: frozenset[str] = froz
     samples = [[[] for _ in range(N_BLOCKS)] for _ in HOSP_IDS]
     door_waits = [[[] for _ in range(N_BLOCKS)] for _ in HOSP_IDS]
     time_at_hosp: list[float] = []
+    visits: list[tuple[str, int, float]] = []
 
     def capacity(h: str) -> int:
         return params.door_capacity[HOSP_IDS.index(h)][_block(env.now)]
@@ -109,12 +117,17 @@ def run_night(calls: list[dict], params: SimParams, slots: frozenset[str] = froz
         yield item["started"]                            # ER accepted the patient from the nurse
         nurse_load[h] -= 1
 
-    def mission(i: int, call: dict):
+    def travel_min(i: int, dest) -> float:
+        return _km(pos[i], dest) / params.speed_kmh * 60
+
+    def mission(i: int | None, call: dict):
+        """i is a local ambulance, or None for a unit sent from outside the area."""
         dest = (call["lat"], call["lon"])
-        yield env.timeout(_km(pos[i], dest) / params.speed_kmh * 60)
+        yield env.timeout(outside_drive[call["id"]] if i is None else travel_min(i, dest))
         response[call["id"]] = env.now - call["t"]
         yield env.timeout(params.scene_min)
-        pos[i] = dest
+        if i is not None:
+            pos[i] = dest
         if call.get("transport"):
             h = call["hosp"]
             yield env.timeout(_km(dest, HOSP_POS[h]) / params.speed_kmh * 60)
@@ -132,30 +145,41 @@ def run_night(calls: list[dict], params: SimParams, slots: frozenset[str] = froz
             at_door[h] -= 1
             door_waits[HOSP_IDS.index(h)][_block(arrived)].append(env.now - arrived)
             time_at_hosp.append(env.now - arrived + params.cleanup_min)
+            visits.append((h, _block(arrived), env.now - arrived + params.cleanup_min))
             yield env.timeout(params.cleanup_min)
-            pos[i] = HOSP_POS[h]
-        free.add(i)
-        dispatch_waiting()
+            if i is not None:
+                pos[i] = HOSP_POS[h]
+        if i is not None:
+            free.add(i)
+            serve_held()
 
-    def nearest_free(dest) -> int:
-        return min(free, key=lambda i: _km(pos[i], dest))
+    def nearest_free(dest):
+        return min(free, key=lambda j: _km(pos[j], dest)) if free else None
 
-    def send(call: dict):
-        i = nearest_free((call["lat"], call["lon"]))
-        free.discard(i)
-        env.process(mission(i, call))
-
-    def dispatch_waiting():
-        while free and waiting:
-            waiting.sort(key=lambda w: (w[0], w[1]))
-            _, _, call = waiting.pop(0)
-            send(call)
+    def serve_held():
+        while free and held:
+            call = held.popleft()
+            i = nearest_free((call["lat"], call["lon"]))
+            free.discard(i)
+            env.process(mission(i, call))
 
     def arrival(call: dict):
+        # Priority dispatch, as NYC does: an urgent call gets a unit within seconds. If every local
+        # ambulance is busy (often stuck at an ER door) or an outside unit is closer, help comes from
+        # outside the area. Non-urgent calls are held until a local ambulance frees up.
         yield env.timeout(call["t"] + params.dispatch_delay_min)
-        priority = 0 if call["severity"] <= params.urgent_max_severity else 1
-        waiting.append((priority, env.now, call))
-        dispatch_waiting()
+        dest = (call["lat"], call["lon"])
+        if call["severity"] > params.urgent_max_severity:
+            held.append(call)
+            serve_held()
+            return
+        i = nearest_free(dest)
+        if i is not None and travel_min(i, dest) <= outside_drive[call["id"]]:
+            free.discard(i)
+        else:
+            i = None
+            outside[0] += 1
+        env.process(mission(i, call))
 
     def sampler():
         while env.now < N_BLOCKS * BLOCK_MIN:
@@ -181,4 +205,6 @@ def run_night(calls: list[dict], params: SimParams, slots: frozenset[str] = froz
         stuck=[[mean(samples[k][b]) for b in range(N_BLOCKS)] for k in range(len(HOSP_IDS))],
         door_wait_min=[[mean(door_waits[k][b]) for b in range(N_BLOCKS)] for k in range(len(HOSP_IDS))],
         time_at_hosp_min=time_at_hosp,
+        hosp_visits=visits,
+        outside_responses=outside[0],
     )

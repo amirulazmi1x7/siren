@@ -85,6 +85,13 @@ def load_all(raw_path: str = "data/raw/fridays.parquet", seed: int = 0) -> pd.Da
     return attach_locations(clean_calls(raw), cents, seed, radius_km=CITY.get("area_radius_km"))
 
 
+def night_calls(df: pd.DataFrame, night: date) -> list[dict]:
+    """One night's calls as simulation input, sorted by time, with ids 0..n-1."""
+    n = df[df["night"] == night].sort_values("t").reset_index(drop=True)
+    return [{"id": i, "t": float(r.t), "lat": float(r.lat), "lon": float(r.lon), "hosp": r.hosp,
+             "severity": int(r.severity), "transport": bool(r.transport)} for i, r in enumerate(n.itertuples())]
+
+
 if __name__ == "__main__":
     df = load_all()
     print("calls:", len(df), "nights:", df.night.nunique())
