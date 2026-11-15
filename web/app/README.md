@@ -1,4 +1,4 @@
-# AmbuReady web app
+# Siren web app
 
 React + TypeScript + Vite. Street map with MapLibre (OpenFreeMap tiles) and deck.gl.
 Reads one file, `web/data/scenarios.json` (written by Person A's `python -m sim.export`), served as `/scenarios.json`.

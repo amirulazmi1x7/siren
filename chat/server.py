@@ -1,4 +1,4 @@
-"""AmbuReady chat: a small local server that lets Claude answer what-if questions by running our rehearsal.
+"""Siren chat: a small local server that lets Claude answer what-if questions by running our rehearsal.
 
 Run (key stays in your shell, never in code or git):
     export ANTHROPIC_API_KEY=...        # or `ant auth login`
@@ -17,11 +17,11 @@ import anthropic
 
 from chat.tools import TOOL_SCHEMAS, run_tool
 
-PORT = int(os.environ.get("AMBUREADY_CHAT_PORT", "8787"))
+PORT = int(os.environ.get("SIREN_CHAT_PORT") or os.environ.get("AMBUREADY_CHAT_PORT") or "8787")
 MODEL = "claude-opus-5-5"
 MAX_TOOL_ROUNDS = 6
 
-SYSTEM = """You are AmbuReady, a planning agent for ER and EMS managers in central Brooklyn (three ERs, called \
+SYSTEM = """You are Siren, a planning agent for ER and EMS managers in central Brooklyn (three ERs, called \
 Hospital A, B and C). Ambulances lose time waiting at ER doors to hand over patients; you recommend the cheapest \
 fixes for a Friday night (offload nurse shifts at an ER door, extra ambulances, or both).
 
@@ -41,11 +41,13 @@ survival odds by about 8% (published research), and that in three ERs there are 
 lives saved honestly. Talk in minutes saved and people reached within 10 minutes.
 - Costs are estimates ($180 per 2-hour nurse shift, $2,640 per extra ambulance per night).
 - Never name the real hospitals; they are A, B and C.
-- Stay on ambulance and ER planning; politely decline unrelated requests.
+- Stay on ambulance and ER planning. For an unrelated request (a poem, general trivia), decline in one short \
+sentence and suggest a what-if you can rehearse. Do not call any tool for it.
 
-Style: you are talking to a busy manager, often on a projector. Lead with the recommendation in one sentence, then \
-two to four short lines of numbers. Write times like "10 PM to 2 AM", not block numbers. No markdown headers, no \
-tables; short bullet lines are fine."""
+Style: you are talking to a busy manager on a projector. Plain text only: no markdown, no ** bold, no \
+headers, no tables. Lead with the recommendation in one sentence. Then at most 3 short lines starting with "- ", \
+each with one key number and its SIM or REAL tag. End with one short line: rehearsal averages, costs are estimates. \
+Keep the whole reply under 80 words. Write times like "10 PM to 2 AM", not block numbers."""
 
 _client: anthropic.Anthropic | None = None
 _sessions: dict[str, list] = {}
@@ -172,7 +174,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    print(f"AmbuReady chat on http://localhost:{PORT}  (model {MODEL})")
+    print(f"Siren chat on http://localhost:{PORT}  (model {MODEL})")
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 
 

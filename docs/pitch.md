@@ -1,4 +1,4 @@
-# AmbuReady: 3-minute pitch
+# Siren: 3-minute pitch
 
 Two speakers. **A** = story and data. **B** = demo (driving the laptop).
 About 330 spoken words: room to breathe in 3 minutes. Only a few numbers, said slowly.
@@ -19,7 +19,7 @@ The story in one line: **people wait → we found why → what if we planned ahe
 ## 0:55 – 1:10 · What if? (A)
 > So we asked: what if you knew that before the night started? What if you could plan ahead and put the right help, in the right place, at the right time?
 >
-> That's **AmbuReady**: an AI agent that rehearses tonight's shift on real 911 data, and recommends the smartest way to get ambulances back on the road.
+> That's **Siren**: an AI agent that rehearses tonight's shift on real 911 data, and recommends the smartest way to get ambulances back on the road.
 
 ## 1:10 – 2:15 · Show it (B)
 > I run an ER. I have a small budget tonight. I ask the agent to plan. *(clicks **Plan this night**)*
@@ -39,7 +39,7 @@ The story in one line: **people wait → we found why → what if we planned ahe
 ## 2:40 – 3:00 · Where it goes next, and close (A)
 > This is a working prototype, so it can only suggest what our data covers. Give it more data, like live ER capacity or traffic, and it can suggest more fixes.
 >
-> Ambulances aren't slow. They're stuck. AmbuReady gets them ready for the next call.
+> Ambulances aren't slow. They're stuck. Siren gets them back on the road.
 
 ---
 
@@ -62,13 +62,13 @@ The story in one line: **people wait → we found why → what if we planned ahe
 ## Likely judge questions
 
 **"Isn't this just a dashboard?"**
-No. A dashboard shows the problem. AmbuReady takes a goal and a budget, rehearses thousands of options on real data, and hands you a schedule to approve. The output is a decision.
+No. A dashboard shows the problem. Siren takes a goal and a budget, rehearses thousands of options on real data, and hands you a schedule to approve. The output is a decision.
 
 **"Where's the AI?"**
 The agent plans: it searches thousands of schedules and fixes on a rehearsal calibrated to real data and picks the best for the budget. (If the chat is built: plus a language model that answers what-ifs by running the rehearsal as a tool.)
 
 **"How do you know nurses actually work?"**
-We don't assume they do. Offload nurses have cut handover times in Australia, Ontario and California hospitals, with mixed results, which is why AmbuReady compares them with ambulances and mixes and picks per night. On busy nights it adds an ambulance.
+We don't assume they do. Offload nurses have cut handover times in Australia, Ontario and California hospitals, with mixed results, which is why Siren compares them with ambulances and mixes and picks per night. On busy nights it adds an ambulance.
 
 **"How many lives does this save?"**
 For cardiac arrest, published research shows about 8% lower survival odds per minute of delay. In our three ERs there are only a few arrest calls a night, so a lives number would be too small to measure honestly. What we can show is minutes saved and people reached in time. Across a city, every night, that adds up.

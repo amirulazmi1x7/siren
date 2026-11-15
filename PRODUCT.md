@@ -12,12 +12,12 @@ Primary: an ER manager (charge nurse or ED operations lead) planning staffing fo
 Secondary: MadHacks 2026 judges. They see the page on a projector during a 3-minute live demo, and some open the Devpost link on their own laptop. The page is designed as a real work tool first; the demo shows that tool working.
 
 ## Product Purpose
-AmbuReady is an AI agent that rehearses tonight's ER shift on real 911 data, and finds the cheapest way to get ambulances back on the road. It replays a real night of 911 calls, shows ambulances stuck at hospital doors, tests thousands of fixes (offload nurse schedules across 3 hospitals x 6 two-hour blocks, extra ambulances, and mixes) within a budget, recommends one, and prints the chosen schedule. The manager can also try to beat the agent with their own plan.
+Siren is an AI agent that rehearses tonight's ER shift on real 911 data, and finds the cheapest way to get ambulances back on the road. It replays a real night of 911 calls, shows ambulances stuck at hospital doors, tests thousands of fixes (offload nurse schedules across 3 hospitals x 6 two-hour blocks, extra ambulances, and mixes) within a budget, recommends one, and prints the chosen schedule. The manager can also try to beat the agent with their own plan.
 
 Success: the manager can see which slots matter, trust why, and leave with a schedule. For judges: the before/after is obvious within one demo pass.
 
 ## Positioning
-"Ambulances aren't slow. They're stuck at the ER. AmbuReady gets them ready for the next call." Existing dashboards report response times. This agent rehearses the night on real NYC 911 data, recommends a specific staffing change, and outputs a schedule.
+"Ambulances aren't slow. They're stuck at the ER. Siren gets them back on the road." Existing dashboards report response times. This agent rehearses the night on real NYC 911 data, recommends a specific staffing change, and outputs a schedule.
 
 ## Operating Context
 - Used at a desk or on a big screen ahead of a shift, not mid-crisis.
@@ -37,7 +37,7 @@ Success: the manager can see which slots matter, trust why, and leave with a sch
 - Stretch, undecided: agent chat box, LightGBM forecast, "why was this call late?" popup.
 
 ## Brand Commitments
-- Name: AmbuReady. Tagline: "An AI agent that rehearses tonight's ER shift on real 911 data, and finds the cheapest way to get ambulances back on the road." In user-facing copy say "rehearsal", never "digital twin" or "simulation".
+- Name: Siren (renamed from AmbuReady, Sun Nov 15). Tagline: "An AI agent that rehearses tonight's ER shift on real 911 data, and finds the cheapest way to get ambulances back on the road." In user-facing copy say "rehearsal", never "digital twin" or "simulation".
 - Voice: calm and clinical, like a hospital operations tool. Short, sober labels; numbers do the talking. No hype, no em-dashes in user-facing text.
 
 ## Evidence on Hand

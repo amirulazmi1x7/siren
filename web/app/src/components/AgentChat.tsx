@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { type Slot, isSlot } from "../lib/contract";
 import { usePlanner } from "../state/PlannerContext";
 import css from "./AgentChat.module.css";
@@ -128,7 +128,7 @@ export function AgentChat() {
                   ))}
                 </ol>
               )}
-              <p className={css.reply}>{t.text}</p>
+              <ReplyText text={t.text} />
               {t.plan && t.plan.extra_ambulances === 0 && t.plan.nurse_shifts.length > 0 && (
                 <button type="button" className={`btn ${css.show}`} onClick={() => showPlan(t.plan!)}>
                   Show this plan on the map
@@ -157,3 +157,43 @@ export function AgentChat() {
     </section>
   );
 }
+
+/** "**x**" -> bold, without injecting HTML. */
+function inline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? <b key={i}>{part.slice(2, -2)}</b> : part,
+  );
+}
+
+/**
+ * The agent is told to answer in plain text, but models sometimes slip into markdown. Render the two forms it
+ * uses (bullets and bold) properly instead of showing raw "**" and "- " on the projector. Text only, no HTML.
+ */
+function ReplyText({ text }: { text: string }) {
+  const blocks: ReactNode[] = [];
+  let items: string[] = [];
+  const flush = () => {
+    if (items.length) {
+      blocks.push(
+        <ul key={`l${blocks.length}`} className={css.bullets}>
+          {items.map((it, i) => (
+            <li key={i}>{inline(it)}</li>
+          ))}
+        </ul>,
+      );
+      items = [];
+    }
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const bullet = line.match(/^[-*•]\s+(.*)$/);
+    if (bullet) items.push(bullet[1] ?? "");
+    else {
+      flush();
+      if (line) blocks.push(<p key={`p${blocks.length}`}>{inline(line.replace(/^#+\s*/, ""))}</p>);
+    }
+  }
+  flush();
+  return <div className={css.reply}>{blocks}</div>;
+}
+

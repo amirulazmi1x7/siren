@@ -18,7 +18,7 @@ export function ScheduleSheet() {
         </button>
       </div>
       <main className={css.sheet}>
-        <h1 className={css.title}>AmbuReady shift schedule</h1>
+        <h1 className={css.title}>SIREN shift schedule</h1>
         {s.status === "loading" && <p className="muted">Loading…</p>}
         {s.status === "error" && <Problem text="Could not load scenarios.json." />}
         {s.status === "ready" && <SheetBody data={s.data} />}
@@ -42,7 +42,7 @@ function SheetBody({ data }: { data: Scenarios }) {
   const amb = Number(params.get("amb") ?? "0");
   if (!Number.isInteger(amb) || amb < 0 || amb > 2) return <Problem text="This link has an invalid ambulance count." />;
 
-  document.title = `AmbuReady shift schedule · ${night.label}`;
+  document.title = `SIREN shift schedule · ${night.label}`;
   const meta = (
     <p className={css.meta}>
       {data.city.area}, {data.city.name} · {night.label} · Friday 6 PM to Saturday 6 AM

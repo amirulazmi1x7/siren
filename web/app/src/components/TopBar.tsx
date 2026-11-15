@@ -12,7 +12,7 @@ export function TopBar() {
   const active = Math.max(0, names.indexOf(state.nightName));
   return (
     <header className={css.bar}>
-      <h1 className={css.title}>AmbuReady</h1>
+      <h1 className={css.title}>SIREN</h1>
       <p className={css.where}>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
