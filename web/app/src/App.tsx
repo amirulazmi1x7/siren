@@ -3,6 +3,7 @@ import { HOSPITAL_IDS, N_BLOCKS, type NightName, type Slot } from "./lib/contrac
 import { money, signed } from "./lib/format";
 import { VIEWS, VIEW_META } from "./lib/plan";
 import { clockLabel } from "./lib/time";
+import { MapView } from "./map/MapView";
 import { PlannerProvider, usePlanner } from "./state/PlannerContext";
 
 export function App() {
@@ -12,7 +13,12 @@ export function App() {
     return <p style={{ padding: 24, color: "var(--late)" }}>Could not load scenarios.json: {s.message}</p>;
   return (
     <PlannerProvider data={s.data}>
-      <DebugPanel />
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(360px, 1fr)", gap: 16, padding: 16, height: "100%" }}>
+        <MapView />
+        <div style={{ overflow: "auto" }}>
+          <DebugPanel />
+        </div>
+      </div>
     </PlannerProvider>
   );
 }
@@ -21,7 +27,7 @@ export function App() {
 function DebugPanel() {
   const { data, state, dispatch, derived } = usePlanner();
   return (
-    <main style={{ padding: 24, display: "grid", gap: 12, maxWidth: 760 }}>
+    <main style={{ display: "grid", gap: 12 }}>
       <h1 style={{ margin: 0 }}>Offload Planner (state debug)</h1>
       <div style={{ display: "flex", gap: 6 }}>
         {(Object.keys(data.nights) as NightName[]).map((n) => (
