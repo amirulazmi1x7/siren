@@ -40,7 +40,7 @@ Our AI planner tests every fix on a digital twin of the city and picks the cheap
 - Hospitals stay **A / B / C**; never name them.
 - Don't claim the real data proves fewer late patients. Late-patient numbers are **SIM** estimates only.
 - "AI planner" is OK: it searches thousands of plans on the twin. Don't say "trained on hospital data".
-- Costs ($180 per nurse shift, $3,600 per ambulance night) are placeholders until verified. Label them "est."
+- Costs are estimates; label them "est.". Nurse: $180 per 2-hour block (~$90/h: BLS NYC RN mean $53.47/h + benefits/overtime). Ambulance: $2,640 per extra ambulance per night (~$220 per unit-hour), so `costs.ambulance_night_usd` = $5,280 for +2 and `costs.ambulance_each_night_usd` = $2,640.
 
 ## Data: new fields, now live in the real scenarios.json (additive to the contract)
 `web/data/scenarios.json` is now real (`fake: false`, 4.4 MB, built by `python -m sim.export`) and still passes the contract. It adds:
