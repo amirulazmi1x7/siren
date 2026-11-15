@@ -15,7 +15,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from pipeline.config import AMB_NIGHT_USD, BLOCKS, CITY, HOSPITALS, NURSE_SHIFT_USD
+from pipeline.config import AMB_EACH_NIGHT_USD, AMB_NIGHT_USD, BLOCKS, CITY, HOSPITALS, NURSE_SHIFT_USD
 from shared.contract import MAX_LOOKUP_SHIFTS, validate_scenarios
 from sim.model import NightResult, SimParams, run_night
 from sim.optimize import all_plan_keys, evaluate, greedy_plans, hours_at_hospital
@@ -35,7 +35,7 @@ def result_to_json(r: NightResult) -> dict:
 
 def _option(oid, label, slots, extra, e, base_hours) -> dict:
     return {"id": oid, "label": label, "slots": slots, "extra_ambulances": extra,
-            "cost_usd": len(slots) * NURSE_SHIFT_USD + extra * AMB_NIGHT_USD,
+            "cost_usd": len(slots) * NURSE_SHIFT_USD + extra * AMB_EACH_NIGHT_USD,
             "hours_back": round(base_hours - e["hours_at_hospital"] + extra * NIGHT_HOURS, 1),
             "hours_at_hospital": e["hours_at_hospital"], "late": e["late"]}
 
@@ -98,7 +98,8 @@ def build_scenarios(nights: dict[str, tuple[list[dict], dict, str]], params: Sim
         "city": {"name": CITY["name"], "area": CITY["area"]},
         "blocks": BLOCKS,
         "hospitals": [{"id": h["id"], "lat": h["lat"], "lon": h["lon"]} for h in HOSPITALS],
-        "costs": {"nurse_shift_usd": NURSE_SHIFT_USD, "ambulance_night_usd": AMB_NIGHT_USD},
+        "costs": {"nurse_shift_usd": NURSE_SHIFT_USD, "ambulance_night_usd": AMB_NIGHT_USD,
+                  "ambulance_each_night_usd": AMB_EACH_NIGHT_USD},
         "nights": {name: build_night(name, calls, params, real, label, max_k=max_k, seeds=seeds)
                    for name, (calls, real, label) in nights.items()},
     }

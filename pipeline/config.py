@@ -20,8 +20,12 @@ CITY = {
 HOSPITALS = CITY["hospitals"]
 BLOCKS = ["6-8P", "8-10P", "10P-12A", "12-2A", "2-4A", "4-6A"]
 LATE_MIN = 10
-NURSE_SHIFT_USD = 180   # placeholder: ~$90/h x 2h, verify
-AMB_NIGHT_USD = 3600    # placeholder: 2 units x 12h x ~$150/unit-hour, verify
+# Nurse: BLS May 2023 NYC-metro RN mean wage $53.47/h; + ~30% benefits and an overtime/incentive premium -> ~$90/h.
+NURSE_SHIFT_USD = 180   # one 2-hour block (est.)
+# Ambulance: ~$220 per staffed unit-hour (EMS World cost model; CA EMSA 2025 strike-team rates ~$167-211/h).
+AMB_UNIT_HOUR_USD = 220
+AMB_EACH_NIGHT_USD = AMB_UNIT_HOUR_USD * 12          # one extra ambulance, 6 PM-6 AM (est.)
+AMB_NIGHT_USD = 2 * AMB_EACH_NIGHT_USD               # '+2 ambulances' as the page shows it
 
 RAW_COLUMNS = [
     "incident_id", "incident_datetime", "initial_severity_level_code", "zipcode",
