@@ -1,0 +1,28 @@
+import { viewNameInline } from "../lib/plan";
+import { clockLabel } from "../lib/time";
+import { usePlanner } from "../state/PlannerContext";
+import { Badge } from "./Badge";
+import css from "./MapHud.module.css";
+
+/** Headline + clock over the map, sized to read from the back of the room. */
+export function MapHud() {
+  const { state, derived } = usePlanner();
+  return (
+    <div className={css.hud} aria-live="polite">
+      <div className={css.headline}>
+        <b className={`num ${css.count}`} data-testid="late-count">
+          {derived.lateSoFar}
+        </b>
+        <span>
+          {derived.lateSoFar === 1 ? "person" : "people"} waited over 10 min <Badge kind="sim" />
+        </span>
+      </div>
+      <div className={css.meta}>
+        <span className={`num ${css.clock}`} data-testid="clock">
+          {clockLabel(state.t)}
+        </span>
+        <span className="muted">Showing {viewNameInline(state.view)}</span>
+      </div>
+    </div>
+  );
+}

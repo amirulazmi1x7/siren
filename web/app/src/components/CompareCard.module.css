@@ -1,0 +1,64 @@
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 140px 1fr 64px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+}
+.row:hover { background: var(--bg); }
+.row:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.sel { border-color: var(--ink); }
+
+.name { font-size: 17px; font-weight: 600; }
+.name small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.track {
+  height: 22px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 400ms var(--ease-out);
+}
+.val {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.stat {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.stat b { display: block; font-size: 26px; }
+.stat span { font-size: 14px; color: var(--muted); }

@@ -1,0 +1,105 @@
+.wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+.play {
+  align-self: center;
+  min-width: 132px;
+  white-space: nowrap;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Track: histogram on top, late markers, block labels at the bottom. */
+.track {
+  position: relative;
+  height: 70px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.track:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.bars {
+  position: absolute;
+  inset: 6px 0 34px 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+.bar {
+  flex: 1;
+  min-height: 1px;
+  background: #c9c6bc;
+  border-radius: 2px 2px 0 0;
+  transition: background 200ms;
+}
+.played { background: #8f948f; }
+
+.ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  height: 12px;
+}
+.tick {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid var(--late);
+  opacity: 0.25;
+  transition: opacity 200ms;
+}
+.tickOn { opacity: 0.95; }
+
+.blocks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+.block {
+  border-left: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 20px;
+}
+.block:first-child { border-left: 0; }
+
+.head {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.head::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}

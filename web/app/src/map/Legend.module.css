@@ -1,26 +1,22 @@
 .legend {
-  position: absolute;
-  left: 10px;
-  top: 10px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 16px;
-  /* Leave room for the zoom buttons on the right. */
-  max-width: calc(100% - 70px);
-  padding: 7px 12px;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 0.94);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+  gap: 4px 16px;
   color: var(--ink);
-  font-size: 15px;
-  pointer-events: none;
-  z-index: 2;
+  font-size: 14px;
 }
 .legend span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.bar {
+  display: inline-block;
+  width: 10px;
+  height: 12px;
+  border-radius: 2px;
+  background: #8f948f;
 }
 .note {
   color: var(--muted);

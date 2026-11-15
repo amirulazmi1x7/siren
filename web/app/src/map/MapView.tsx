@@ -11,7 +11,6 @@ import { usePlanner } from "../state/PlannerContext";
 import { MAX_BOUNDS, MAX_ZOOM, MIN_ZOOM, ONLINE_STYLE_URL, boundsOf, hidePlaceLabels } from "./basemap";
 import { DeckOverlay } from "./DeckOverlay";
 import { HospitalMarker } from "./HospitalMarker";
-import { Legend } from "./Legend";
 import { callLayers, orderCalls } from "./layers";
 import css from "./MapView.module.css";
 
@@ -100,7 +99,6 @@ export function MapView() {
           </Marker>
         ))}
       </Map>
-      <Legend />
       {tileError && (
         <div className={css.error} role="status">
           Street map tiles could not load (no internet?). Data still works; use the offline page if needed.

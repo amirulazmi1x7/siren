@@ -1,0 +1,26 @@
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.grid { stroke: var(--line); stroke-width: 1; }
+.axis { font-size: 12px; fill: var(--muted); }
+.base { fill: var(--muted); opacity: 0.4; }
+.cur { transition: y 400ms var(--ease-out), height 400ms var(--ease-out), fill 300ms; }
+
+.key {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  margin-top: 4px;
+}
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.key i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.swBase { background: var(--muted); opacity: 0.4; }
+
+.real { margin: 10px 0 0; }
