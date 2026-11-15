@@ -1,6 +1,7 @@
 import { money, plural, signed } from "../lib/format";
 import { VIEWS, VIEW_META, costOf, extraReached, resultForView } from "../lib/plan";
 import { usePlanner } from "../state/PlannerContext";
+import { AnimatedNumber } from "./AnimatedNumber";
 import { Badge } from "./Badge";
 import css from "./CompareCard.module.css";
 
@@ -24,7 +25,7 @@ export function CompareCard() {
           : `${plural(state.slots.length, "shift")} · ${money(cost)}`;
 
   const { result, extra, cost } = derived;
-  const perPerson = extra !== null && extra > 0 && cost > 0 ? money(cost / extra) : "-";
+  const perPerson = extra !== null && extra > 0 && cost > 0 ? cost / extra : null;
 
   return (
     <section className="card" aria-labelledby="cmp-h">
@@ -56,17 +57,21 @@ export function CompareCard() {
                 }}
               />
             </span>
-            <span className={`num ${css.val}`}>{r.extra === null ? "n/a" : signed(r.extra)}</span>
+            {r.extra === null ? (
+              <span className={`num ${css.val}`}>n/a</span>
+            ) : (
+              <AnimatedNumber value={r.extra} format={(n) => signed(Math.round(n))} className={`num ${css.val}`} />
+            )}
           </button>
         ))}
       </div>
 
       {result ? (
         <div className={css.stats} data-testid="stats">
-          <Stat value={String(result.late_ids.length)} label="reached late" />
-          <Stat value={signed(extra ?? 0)} label="extra people in time" />
-          <Stat value={money(cost)} label="cost for the night" />
-          <Stat value={perPerson} label="cost per extra person" />
+          <Stat value={result.late_ids.length} label="reached late" />
+          <Stat value={extra ?? 0} format={(n) => signed(Math.round(n))} label="extra people in time" />
+          <Stat value={cost} format={money} label="cost for the night" />
+          <Stat value={perPerson} format={money} label="cost per extra person" />
         </div>
       ) : (
         <p className="muted small">No precomputed result for this plan.</p>
@@ -75,10 +80,10 @@ export function CompareCard() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label, format }: { value: number | null; label: string; format?: (n: number) => string }) {
   return (
     <div className={css.stat}>
-      <b className="num">{value}</b>
+      <b className="num">{value === null ? "-" : <AnimatedNumber value={value} format={format} />}</b>
       <span>{label}</span>
     </div>
   );

@@ -1,6 +1,7 @@
 import { HOSPITAL_IDS, N_BLOCKS, type Slot, planKey } from "../lib/contract";
 import { percent, plural } from "../lib/format";
 import { MAX_BUDGET, MIN_BUDGET, slotsForView } from "../lib/plan";
+import { focusHospital } from "../map/mapControl";
 import { usePlanner } from "../state/PlannerContext";
 import { Badge } from "./Badge";
 import css from "./PlanCard.module.css";
@@ -64,7 +65,15 @@ export function PlanCard() {
         ))}
         {HOSPITAL_IDS.map((h, i) => (
           <Row key={h}>
-            <div className={css.rowLab}>{h}</div>
+            <button
+              type="button"
+              className={css.rowLab}
+              title={`Show Hospital ${h} on the map`}
+              aria-label={`Show Hospital ${h} on the map`}
+              onClick={() => focusHospital(h)}
+            >
+              {h}
+            </button>
             {Array.from({ length: N_BLOCKS }, (_, b) => {
               const slot = `${h}-${b}` as Slot;
               const on = shownSlots.has(slot);

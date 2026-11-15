@@ -2,6 +2,7 @@
 import { DataFilterExtension, type DataFilterExtensionProps } from "@deck.gl/extensions";
 import { IconLayer, ScatterplotLayer } from "@deck.gl/layers";
 import type { Call } from "../lib/contract";
+import { prefersReducedMotion } from "../lib/motion";
 
 type RGB = [number, number, number];
 const OK: RGB = [31, 127, 85]; // --ok
@@ -69,7 +70,7 @@ export function callLayers({ calls, lateIds, t, playing, resultKey }: CallLayerI
   });
 
   // A short expanding ring when a call comes in during replay.
-  const recent = playing ? calls.filter((c) => c.t <= t && c.t > t - PULSE_MIN) : [];
+  const recent = playing && !prefersReducedMotion() ? calls.filter((c) => c.t <= t && c.t > t - PULSE_MIN) : [];
   const pulse = new ScatterplotLayer<Call>({
     id: "call-pulse",
     data: recent,

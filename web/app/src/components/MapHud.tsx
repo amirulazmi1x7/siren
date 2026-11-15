@@ -1,6 +1,7 @@
 import { viewNameInline } from "../lib/plan";
 import { clockLabel } from "../lib/time";
 import { usePlanner } from "../state/PlannerContext";
+import { AnimatedNumber } from "./AnimatedNumber";
 import { Badge } from "./Badge";
 import css from "./MapHud.module.css";
 
@@ -10,9 +11,13 @@ export function MapHud() {
   return (
     <div className={css.hud} aria-live="polite">
       <div className={css.headline}>
-        <b className={`num ${css.count}`} data-testid="late-count">
-          {derived.lateSoFar}
-        </b>
+        <AnimatedNumber
+          value={derived.lateSoFar}
+          instant={state.playing}
+          ms={350}
+          className={`num ${css.count}`}
+          testId="late-count"
+        />
         <span>
           {derived.lateSoFar === 1 ? "person" : "people"} waited over 10 min <Badge kind="sim" />
         </span>

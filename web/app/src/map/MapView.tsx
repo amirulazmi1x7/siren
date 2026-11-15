@@ -7,11 +7,14 @@ import Map, {
   ScaleControl,
   type MapRef,
 } from "react-map-gl/maplibre";
+import type { HospitalId } from "../lib/contract";
+import { motionMs } from "../lib/motion";
 import { usePlanner } from "../state/PlannerContext";
 import { MAX_BOUNDS, MAX_ZOOM, MIN_ZOOM, ONLINE_STYLE_URL, boundsOf, hidePlaceLabels } from "./basemap";
 import { DeckOverlay } from "./DeckOverlay";
 import { HospitalMarker } from "./HospitalMarker";
 import { callLayers, orderCalls } from "./layers";
+import { registerFocusHandler } from "./mapControl";
 import css from "./MapView.module.css";
 
 const FIT_PADDING = 56;
@@ -45,12 +48,21 @@ export function MapView() {
       firstFit.current = false;
       return;
     }
-    mapRef.current?.fitBounds(bounds, { padding: FIT_PADDING, duration: FLY_MS });
+    mapRef.current?.fitBounds(bounds, { padding: FIT_PADDING, duration: motionMs(FLY_MS) });
   }, [bounds]);
 
   const focusHospital = useCallback((lon: number, lat: number) => {
-    mapRef.current?.easeTo({ center: [lon, lat], zoom: FOCUS_ZOOM, duration: FOCUS_MS });
+    mapRef.current?.easeTo({ center: [lon, lat], zoom: FOCUS_ZOOM, duration: motionMs(FOCUS_MS) });
   }, []);
+
+  // Let the plan grid's hospital labels move the camera here.
+  useEffect(() => {
+    registerFocusHandler((id: HospitalId) => {
+      const h = data.hospitals.find((x) => x.id === id);
+      if (h) focusHospital(h.lon, h.lat);
+    });
+    return () => registerFocusHandler(null);
+  }, [data.hospitals, focusHospital]);
 
   // Late calls draw on top; recompute only when the night or the result changes, not every frame.
   const resultKey = useMemo(() => derived.shown.late_ids.join(","), [derived.shown]);
