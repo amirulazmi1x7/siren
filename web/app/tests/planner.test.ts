@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bestValue } from "../src/lib/plan";
+import { budgetSteps, hasPlanner, pickFor } from "../src/lib/recommend";
 import { NIGHT_MIN } from "../src/lib/time";
 import {
   type PlannerAction,
@@ -15,12 +16,12 @@ const data = scenarios();
 const run = (s: PlannerState, ...actions: PlannerAction[]) => actions.reduce((acc, a) => plannerReducer(acc, a, data), s);
 
 describe("initial state", () => {
-  it("starts on typical, full night shown, best-value budget, your plan", () => {
+  it("starts on typical, full night shown, best-value budget, planner's pick when available", () => {
     const s = initialState(data);
     expect(s.nightName).toBe("typical");
     expect(s.t).toBe(NIGHT_MIN);
     expect(s.playing).toBe(false);
-    expect(s.view).toBe("yours");
+    expect(s.view).toBe(hasPlanner(night("typical")) ? "rec" : "yours");
     expect(s.budget).toBe(bestValue(night("typical")).k);
   });
 });
@@ -84,6 +85,18 @@ describe("views", () => {
     expect(s.nightName).toBe("holiday");
     expect(s.slots).toEqual([]);
     expect(s.budget).toBe(bestValue(night("holiday")).k);
+  });
+});
+
+describe.runIf(hasPlanner(night("typical")))("planner budget", () => {
+  it("moving the budget shows the planner's pick at that budget", () => {
+    const steps = budgetSteps(night("typical"));
+    const s = run({ ...initialState(data), view: "yours" }, { type: "setRecBudget", usd: steps[0]! });
+    const d = derive(s, data);
+    expect(s.view).toBe("rec");
+    expect(d.pick?.id).toBe(pickFor(night("typical"), steps[0]!)?.id);
+    expect([...d.shownSlots].sort()).toEqual([...d.pick!.slots].sort());
+    expect(d.cost).toBe(d.pick!.cost_usd);
   });
 });
 

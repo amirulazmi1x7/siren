@@ -1,13 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ScheduleSheet } from "./schedule/ScheduleSheet";
 import "./styles/tokens.css";
+import "./styles/ui.css";
 
-// T9 replaces this with the React shift sheet.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <main style={{ padding: 24 }}>
-      <h1>Offload nurse schedule</h1>
-      <p>Coming in T9.</p>
-    </main>
+    <ScheduleSheet />
   </StrictMode>,
 );

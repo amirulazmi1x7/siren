@@ -9,16 +9,20 @@ export function CompareCard() {
   const { data, state, dispatch, derived } = usePlanner();
   const { night } = derived;
 
-  const rows = VIEWS.map((v) => {
-    const r = resultForView(night, v, state.slots, state.budget);
-    return { v, extra: r ? extraReached(night, r) : null, cost: costOf(data.costs, v, state.slots.length, state.budget) };
+  const rows = VIEWS.filter((v) => v !== "rec" || derived.pick).map((v) => {
+    const r = resultForView(night, v, state.slots, state.budget, state.recBudget);
+    return {
+      v,
+      extra: r ? extraReached(night, r) : null,
+      cost: costOf(data.costs, v, state.slots.length, state.budget, night, state.recBudget),
+    };
   });
   const maxExtra = Math.max(1, ...rows.map((r) => Math.abs(r.extra ?? 0)));
 
   const sub = (v: (typeof VIEWS)[number], cost: number) =>
     v === "nothing"
       ? "baseline"
-      : v === "amb"
+      : v === "amb" || v === "rec"
         ? money(cost)
         : v === "ai"
           ? `${plural(state.budget, "shift")} · ${money(cost)}`
@@ -32,7 +36,9 @@ export function CompareCard() {
       <h2 id="cmp-h">
         Compare <Badge kind="sim" />
       </h2>
-      <p className="muted small">Extra people reached in time vs doing nothing. Tap a row to show it on the map.</p>
+      <p className="muted small">
+        Extra people reached in time vs doing nothing, from one simulated run. Tap a row to show it on the map.
+      </p>
 
       <div className={css.rows}>
         {rows.map((r) => (

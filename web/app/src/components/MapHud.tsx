@@ -26,7 +26,10 @@ export function MapHud() {
         <span className={`num ${css.clock}`} data-testid="clock">
           {clockLabel(state.t)}
         </span>
-        <span className="muted">Showing {viewNameInline(state.view)}</span>
+        <span className="muted">
+          Showing {viewNameInline(state.view)} · one simulated run
+          {derived.result === null && " · no replay for this option, map shows doing nothing"}
+        </span>
       </div>
     </div>
   );

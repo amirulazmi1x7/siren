@@ -58,7 +58,8 @@ describe("resultForView / costOf", () => {
 
   it("prices each view", () => {
     expect(costOf(costs, "nothing", 2, 3)).toBe(0);
-    expect(costOf(costs, "amb", 2, 3)).toBe(costs.ambulance_night_usd);
+    // ambulance_night_usd is per ambulance; +2 ambulances costs twice that.
+    expect(costOf(costs, "amb", 2, 3)).toBe(2 * costs.ambulance_night_usd);
     expect(costOf(costs, "yours", 2, 3)).toBe(2 * costs.nurse_shift_usd);
     expect(costOf(costs, "ai", 2, 3)).toBe(3 * costs.nurse_shift_usd);
   });

@@ -1,0 +1,24 @@
+.steps {
+  margin: 4px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+}
+.fixes {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.fixes li::before {
+  content: "○";
+  display: inline-block;
+  width: 1.4em;
+  color: var(--muted);
+}
+.fixes li.on { color: var(--ink); }
+.fixes li.on::before { content: "✓"; color: var(--rec); font-weight: 700; }

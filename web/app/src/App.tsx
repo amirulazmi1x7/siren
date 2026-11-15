@@ -1,11 +1,12 @@
-import { CompareCard } from "./components/CompareCard";
-import { MapHud } from "./components/MapHud";
+import { BeatPlanner } from "./components/BeatPlanner";
 import { Footer } from "./components/Footer";
-import { PlanCard } from "./components/PlanCard";
-import { RealStats } from "./components/RealStats";
+import { FixLibrary, HowItWorks } from "./components/HowItWorks";
+import { MapHud } from "./components/MapHud";
+import { OptionsCard } from "./components/OptionsCard";
+import { ProblemStrip } from "./components/ProblemStrip";
+import { RecommendationCard } from "./components/RecommendationCard";
 import { Timeline } from "./components/Timeline";
 import { TopBar } from "./components/TopBar";
-import { WhyCard } from "./components/WhyCard";
 import { useScenarios } from "./hooks/useScenarios";
 import { Legend } from "./map/Legend";
 import { MapView } from "./map/MapView";
@@ -38,7 +39,17 @@ function Shell() {
           FAKE DATA for building the page. Real numbers arrive with the pipeline export.
         </div>
       )}
+      <ProblemStrip />
       <main className={css.main}>
+        {/* Decision first: the recommendation, how it was chosen, then the hands-on challenge. */}
+        <aside className={css.panel} aria-label="Planner">
+          <RecommendationCard />
+          <OptionsCard />
+          <HowItWorks />
+          <FixLibrary />
+          <BeatPlanner />
+          <Footer />
+        </aside>
         <section className={css.mapCol} aria-label="Map of the night">
           <div className={css.mapBox}>
             <MapView />
@@ -47,13 +58,6 @@ function Shell() {
           <Timeline />
           <Legend />
         </section>
-        <aside className={css.panel} aria-label="Planner">
-          <RealStats />
-          <PlanCard />
-          <CompareCard />
-          <WhyCard />
-          <Footer />
-        </aside>
       </main>
     </div>
   );

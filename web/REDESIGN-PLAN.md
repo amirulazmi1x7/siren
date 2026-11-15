@@ -14,6 +14,27 @@ Rebuild the planner page as a React + TypeScript app with a **real, zoomable str
 - Live simulation or any backend.
 - Phone layout. PRODUCT.md says phones aren't a target.
 
+## 1b. Phase 2: planner framing (added Sat ~10:30 PM, replaces the dashboard layout)
+
+Source: `docs/brief-web-planner-framing.md` (Person A). The product is **the decision, not the nurse**: the planner compares every fix it can test on the digital twin and recommends the one that gets the most ambulance-hours back on the road for the budget. Nurses are one option; ambulances and mixes are others.
+
+**Layout (1280×720):**
+- Top bar: title, one-line promise, night tabs.
+- Problem strip (REAL): 44 min at hospital per patient (arrival to back in service), ~103 ambulance-hours a Friday night at hospitals, 20 min widely used handover benchmark (cited, not a federal standard).
+- Left column (scrolls): **Tonight's recommendation** hero (budget slider in dollars, the pick in plain words, hours back, late patients, cost, cost per hour vs +2 ambulances, Send schedule), **Options it compared** (pick marked, reason each other option lost), How it works (3 steps), Fix library (2 modeled, 3 coming), **Try to beat the planner** (collapsible: nurse grid, compare, why chart), footer.
+- Right column: map + headline + timeline, showing the recommended plan by default.
+
+**Rules:**
+- Card and options numbers come from `options` (average of simulated runs); map replay comes from the single-run lookup. The map says "one simulated run" so the two never look contradictory.
+- Mixes (+1 ambulance & nurses) and +1 ambulance have no per-call replay in the data. When picked, the map shows "doing nothing" with a clear note, never a guessed replay.
+- Ambulance cost is **per ambulance per night** ($3,600), matching Person A's export; +2 ambulances = $7,200 (read from `options`).
+- Say "AI planner" (it searched thousands of plans). Not "AI agent".
+
+**Tasks:** P1 types + recommendation logic + reducer + tests · P2 problem strip + hero card · P3 options chart · P4 layout swap, map shows pick, beat-the-planner section · P5 how it works + fix library + copy · P6 verify numbers vs data, projector, console. Then T10/T11.
+
+**Status (Sat ~11:30 PM): P1 to P6 done.** `lib/recommend.ts`, `ProblemStrip`, `RecommendationCard`, `OptionsCard`, `HowItWorks`/`FixLibrary`, `BeatPlanner`; schedule sheet takes `amb=`; 56 tests. Verified on all 3 real nights at 1280×720: hero numbers equal the export's `options`, verdicts show trade-offs, mixes show "no replay" instead of a guessed map.
+**Open question for Person A:** the export's rule is "most hours within budget", so at high budgets it can pay 4× for a few more hours (holiday: $4,320 for 40.0 h vs $1,080 for 38.4 h). The page shows this openly; consider a cost-effectiveness cutoff in `sim/export.py recommend()`.
+
 ## 2. Fixed constraints (do not break)
 
 - **Contract is frozen.** The app reads `scenarios.json` exactly as `shared/contract.py` defines it. TS `planKey` must equal Python `plan_key`.
@@ -153,7 +174,7 @@ Time estimates are for one person with an agent. Each task ends with something v
 - [x] **T6. Side panel** (2 h). Done: app shell (`App.tsx`), `TopBar`, `RealStats`, `PlanCard`, `CompareCard`, `WhyCard`, `Footer`, `Badge`, shared `styles/ui.css`. Temporary `ReplayBar` under the map until T7. Parity checked against the old page: same numbers for order, 4-shift limit, budget, AI, +2 ambulances, night switch, Send schedule URL.: TopBar + NightTabs, RealStats, BudgetStepper + BestValue, PlanGrid ("+1" / "AI" labels, heat bars), Show AI plan / Clear / Send schedule, CompareBars (tap to switch view), StatsGrid, WhyChart.
 - [x] **T7. Timeline + HUD** (1 h). Done: `components/Timeline.tsx` (15-min call histogram, late triangles, drag/click/keyboard playhead, play/pause), `components/MapHud.tsx` (late count + clock over the map). Legend moved under the timeline so it no longer covers map credits. Verified on real data.: block timeline with histogram and late ticks, draggable playhead, play/pause, clock + headline HUD over the map.
 - [x] **T8. Animation pass** (1 h). Done: `lib/motion.ts` (reduced-motion aware), `useAnimatedNumber` + `AnimatedNumber` (HUD, compare values, stats count up/down), grid row labels A/B/C ease the map to that hospital (`map/mapControl.ts`), camera and pulse respect reduced motion. Existing: bar width, slot press, queue arrive, night fly-to. Skipped: icon size crossfade (calls reorder when late set changes, so per-item tweening would mismatch).: everything in section 7, plus reduced-motion check.
-- [ ] **T9. Schedule sheet** (45 min): React version of `schedule.html` (same URL params `night`, `plan`), print styles, empty and invalid plan messages.
+- [x] **T9. Schedule sheet** (45 min). Done: `schedule/ScheduleSheet.tsx`, same `?night=&plan=` URL as the old page; checked 3-shift plan, 6-shift AI plan (beyond the lookup), empty plan, invalid plan, unknown night; fixed the blank SIM badge bug the old sheet also had.: React version of `schedule.html` (same URL params `night`, `plan`), print styles, empty and invalid plan messages.
 - [ ] **T10. Offline base map** (1 to 1.5 h, after cutover is safe): extract a Brooklyn `pmtiles` file (study area bbox, max zoom 15), serve fonts and sprites locally, switch style automatically when offline. If the file is over ~40 MB, gitignore it and add a download script instead of committing it.
 - [ ] **T11. QA + cutover** (1 h): run the parity checklist, test at 1280×720 with the laptop in dark mode, check console is clean, check performance during replay, write run instructions in `web/app/README.md`. Then decide the demo entry point.
 

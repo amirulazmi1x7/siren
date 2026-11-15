@@ -12,6 +12,8 @@ import {
   slotsForView,
   toggleSlot,
 } from "../lib/plan";
+import { type PlanOption } from "../lib/contract";
+import { defaultBudget, hasPlanner, pickFor } from "../lib/recommend";
 import { NIGHT_MIN, blockOf } from "../lib/time";
 
 /** A full night replays in this many seconds. */
@@ -23,6 +25,8 @@ export interface PlannerState {
   /** Your slots, in the order they were placed (lowering the budget drops the newest). */
   slots: Slot[];
   budget: number;
+  /** Budget in dollars for the planner's recommendation (slider on the hero card). */
+  recBudget: number;
   view: View;
   /** Replay time, minutes since 6 PM. */
   t: number;
@@ -35,6 +39,7 @@ export type PlannerAction =
   | { type: "setNight"; name: NightName }
   | { type: "toggleSlot"; slot: Slot }
   | { type: "setBudget"; budget: number }
+  | { type: "setRecBudget"; usd: number }
   | { type: "setView"; view: View }
   | { type: "toggleAi" }
   | { type: "clear" }
@@ -52,11 +57,14 @@ export function nightOf(data: Scenarios, name: NightName): Night {
 
 export function initialState(data: Scenarios, name: NightName = "typical"): PlannerState {
   const nightName = data.nights[name] ? name : (Object.keys(data.nights)[0] as NightName);
+  const night = nightOf(data, nightName);
   return {
     nightName,
     slots: [],
-    budget: bestValue(nightOf(data, nightName)).k,
-    view: "yours",
+    budget: bestValue(night).k,
+    recBudget: defaultBudget(night),
+    // Lead with the planner's pick when the data has one.
+    view: hasPlanner(night) ? "rec" : "yours",
     t: NIGHT_MIN,
     playing: false,
     msg: "",
@@ -79,6 +87,9 @@ export function plannerReducer(state: PlannerState, action: PlannerAction, data:
       const budget = clampBudget(action.budget);
       return { ...state, budget, slots: fitSlotsToBudget(state.slots, budget), msg: "" };
     }
+    case "setRecBudget":
+      // Moving the budget means "show me the planner's pick".
+      return { ...state, recBudget: Math.max(0, action.usd), view: "rec", msg: "" };
     case "setView":
       return { ...state, view: action.view, msg: "" };
     case "toggleAi":
@@ -123,13 +134,15 @@ export interface Derived {
   /** Extra people reached in time vs doing nothing; null if not precomputed. */
   extra: number | null;
   bestValue: BestValue;
+  /** The planner's pick for recBudget; null if the data has no planner output. */
+  pick: PlanOption | null;
   /** Late calls that have happened by replay time t. */
   lateSoFar: number;
 }
 
 export function derive(state: PlannerState, data: Scenarios): Derived {
   const night = nightOf(data, state.nightName);
-  const result = resultForView(night, state.view, state.slots, state.budget);
+  const result = resultForView(night, state.view, state.slots, state.budget, state.recBudget);
   const shown = result ?? night.baseline;
   const lateIds = new Set(shown.late_ids);
   let lateSoFar = 0;
@@ -139,11 +152,12 @@ export function derive(state: PlannerState, data: Scenarios): Derived {
     result,
     shown,
     lateIds,
-    shownSlots: new Set(slotsForView(night, state.view, state.slots, state.budget)),
+    shownSlots: new Set(slotsForView(night, state.view, state.slots, state.budget, state.recBudget)),
     block: blockOf(Math.min(state.t, NIGHT_MIN - 0.01)),
-    cost: costOf(data.costs, state.view, state.slots.length, state.budget),
+    cost: costOf(data.costs, state.view, state.slots.length, state.budget, night, state.recBudget),
     extra: result ? extraReached(night, result) : null,
     bestValue: bestValue(night),
+    pick: pickFor(night, state.recBudget),
     lateSoFar,
   };
 }

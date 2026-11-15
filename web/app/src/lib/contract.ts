@@ -32,6 +32,22 @@ export interface PlanResult {
   stuck: Grid;
   /** Mean minutes at the hospital (wait + handoff + cleanup), per block. */
   door_wait_min: Grid;
+  /** Ambulance-hours spent at hospitals that night (SIM). Added by the real export. */
+  hours_at_hospital?: number;
+}
+
+/** One fix the planner compared (real export only). Numbers are averages over simulated runs (SIM). */
+export interface PlanOption {
+  id: string;
+  label: string;
+  slots: Slot[];
+  extra_ambulances: number;
+  cost_usd: number;
+  /** Ambulance-hours back on the road vs doing nothing (fewer hours at hospitals + added ambulance hours). */
+  hours_back: number;
+  hours_at_hospital: number;
+  /** Mean urgent patients reached late. */
+  late: number;
 }
 
 export interface AiPlan extends PlanResult {
@@ -52,6 +68,10 @@ export interface Night {
   ai_plans: Record<AiBudget, AiPlan>;
   /** Every plan of 0 to 4 shifts, keyed by planKey(). */
   lookup: Record<string, PlanResult>;
+  /** Every fix the planner compared (real export only). */
+  options?: PlanOption[];
+  /** Planner's pick per budget step: { "<budget usd>": "<option id>" }. Use the largest key <= budget. */
+  recommendation?: Record<string, string>;
 }
 
 export const REQUIRED_NIGHTS = ["typical", "holiday", "heat"] as const;
@@ -72,6 +92,13 @@ export interface Scenarios {
   hospitals: Hospital[];
   costs: { nurse_shift_usd: number; ambulance_night_usd: number };
   nights: Partial<Record<NightName, Night>>;
+  /** Area-wide measured numbers (REAL), real export only. */
+  area_real?: {
+    median_time_at_hospital_min: number;
+    ambulance_hours_per_friday: number;
+    /** Widely used handover benchmark (cited convention, not a federal standard). */
+    benchmark_offload_min: number;
+  };
 }
 
 /** Same as Python plan_key: unique slots, sorted ascending, joined with ",". Empty plan is "". */

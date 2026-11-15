@@ -33,4 +33,5 @@
 .clock {
   font-size: 26px;
   font-weight: 700;
+  white-space: nowrap;
 }

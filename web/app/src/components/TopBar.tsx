@@ -12,7 +12,7 @@ export function TopBar() {
       <div>
         <h1 className={css.title}>Offload Planner</h1>
         <p className={css.sub}>
-          {data.city.area}, {data.city.name} · Friday 6 PM to Saturday 6 AM
+          Find the cheapest way to get ambulances back on the road tonight · {data.city.area}, {data.city.name}
         </p>
       </div>
       <nav className={css.nights} aria-label="Choose a night">

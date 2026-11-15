@@ -31,3 +31,8 @@ export function clockLabel(t: number): string {
   const h12 = ((h + 11) % 12) + 1;
   return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
+
+/** "10 PM to 2 AM" for blocks 2 through 3. */
+export function blockRangeLabel(startBlock: number, endBlock: number): string {
+  return `${hourLabel(NIGHT_START_HOUR + 2 * startBlock)} to ${hourLabel(NIGHT_START_HOUR + 2 * endBlock + 2)}`;
+}

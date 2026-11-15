@@ -1,7 +1,0 @@
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.grid b { display: block; font-size: 30px; }
-.grid span { font-size: 14px; color: var(--muted); }
